@@ -1,5 +1,5 @@
 const assetMap = {
-  'assets/cache-compass-hero.webp': 'assets/cache-compass-hero.svg',
+  'assets/cache-compass-hero.webp': 'assets/cache-compass-header.jpg',
   'assets/search-interface.webp': 'assets/search-interface.svg',
   'assets/cleanup-dashboard.webp': 'assets/cleanup-dashboard.svg',
   'assets/inventory-review.webp': 'assets/inventory-review.svg'
