@@ -13,6 +13,22 @@ artStyles.rel = 'stylesheet';
 artStyles.href = 'art.css';
 document.head.appendChild(artStyles);
 
+const heroTitle = document.querySelector('#hero-title');
+const heroBenefits = document.querySelector('.hero-benefits');
+const problemStrip = document.querySelector('.problem-strip');
+if (heroTitle) {
+  heroTitle.innerHTML = '<span class="hero-the">THE</span><span class="hero-boss">INVENTORY<br>FINAL BOSS.</span>';
+}
+if (heroBenefits && problemStrip) {
+  const benefitBand = document.createElement('section');
+  benefitBand.className = 'hero-benefit-band';
+  const shell = document.createElement('div');
+  shell.className = 'shell';
+  shell.appendChild(heroBenefits);
+  benefitBand.appendChild(shell);
+  problemStrip.insertAdjacentElement('beforebegin', benefitBand);
+}
+
 const features = document.querySelector('#features');
 if (features) {
   const story = document.createElement('section');
