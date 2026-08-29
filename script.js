@@ -13,6 +13,24 @@ artStyles.rel = 'stylesheet';
 artStyles.href = 'art.css';
 document.head.appendChild(artStyles);
 
+// The wide hero artwork is stored in small text chunks so GitHub Pages can
+// serve the user-supplied image without depending on an external image host.
+const heroParts = Array.from({ length: 9 }, (_, i) =>
+  `assets/hero-wide-${String(i).padStart(2, '0')}.txt`
+);
+Promise.all(heroParts.map(src => fetch(src).then(response => {
+  if (!response.ok) throw new Error(`Unable to load ${src}`);
+  return response.text();
+})))
+  .then(parts => {
+    const heroImageStyle = document.createElement('style');
+    heroImageStyle.textContent = `.hero-clean::after{background-image:url("data:image/webp;base64,${parts.join('').trim()}")!important;}`;
+    document.head.appendChild(heroImageStyle);
+  })
+  .catch(() => {
+    // Keep the CSS-hosted image as a fallback if a chunk cannot be loaded.
+  });
+
 const heroTitle = document.querySelector('#hero-title');
 const heroBenefits = document.querySelector('.hero-benefits');
 const problemStrip = document.querySelector('.problem-strip');
