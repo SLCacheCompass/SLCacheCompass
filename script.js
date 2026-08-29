@@ -17,12 +17,13 @@ const features = document.querySelector('#features');
 if (features) {
   const story = document.createElement('section');
   story.className = 'sl-story';
-  story.setAttribute('aria-label', 'Second Life lifestyle');
+  story.setAttribute('aria-label', 'Why Second Life inventories get big');
   story.innerHTML = `
     <div class="shell sl-story-copy">
-      <p class="eyebrow">WHY INVENTORIES GET BIG</p>
+      <p class="eyebrow">HOW THE MONSTER HAPPENED</p>
       <h2>Second Life is worth collecting.<em>Your clutter isn’t.</em></h2>
-      <p>We shop, decorate, build, travel, take photos, save landmarks, collect animations, and keep the things that make our Second Life ours. Cache Compass is built to help keep the accumulation manageable without treating your inventory like disposable data.</p>
+      <p>You shopped. You decorated. You changed bodies. You grabbed event gifts. You saved landmarks. You unpacked the fatpack twice. You kept the demo because maybe you’d need it later. None of that was a mistake. It’s just how a Second Life inventory becomes a monster.</p>
+      <p><strong>Cache Compass was built for the monster.</strong></p>
     </div>`;
   features.insertAdjacentElement('afterend', story);
 }
@@ -31,14 +32,14 @@ const how = document.querySelector('#how');
 if (how) {
   const life = document.createElement('section');
   life.className = 'sl-life';
-  life.setAttribute('aria-label', 'Life in Second Life');
+  life.setAttribute('aria-label', 'The things worth keeping in Second Life');
   life.innerHTML = `
     <div class="sl-life-grid">
       <article class="sl-life-card explore">
-        <div class="sl-life-copy"><strong>Explore</strong><span>Places, experiences, and landmarks worth keeping.</span></div>
+        <div class="sl-life-copy"><strong>Keep the adventure</strong><span>Places, experiences, and landmarks that are part of your Second Life.</span></div>
       </article>
       <article class="sl-life-card create">
-        <div class="sl-life-copy"><strong>Create</strong><span>Homes, looks, objects, and memories that become part of your inventory.</span></div>
+        <div class="sl-life-copy"><strong>Keep what matters</strong><span>Homes, looks, objects, and memories — without letting the leftovers bury them.</span></div>
       </article>
     </div>`;
   how.insertAdjacentElement('afterend', life);
