@@ -9,9 +9,7 @@
   <meta property="og:title" content="Cache Compass | Inventory Management for Second Life®" />
   <meta property="og:description" content="Find it. Review it. Clean it. A dead end for inventory clutter." />
   <meta property="og:type" content="website" />
-  <meta property="og:image" content="assets/cache-compass-hero.webp" />
   <link rel="canonical" href="https://slcachecompass.com/" />
-  <link rel="preload" as="image" href="assets/cache-compass-hero.webp" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -34,24 +32,34 @@
   </header>
 
   <main>
-    <section class="hero" aria-labelledby="hero-title">
-      <img class="hero-art" src="assets/cache-compass-hero.webp" alt="Cache Compass — Inventory Management for Second Life. A dead end for inventory clutter." />
-      <div class="hero-scrim"></div>
-      <div class="hero-accessible shell">
-        <h1 id="hero-title">Cache Compass — Inventory Management for Second Life</h1>
-      </div>
-    </section>
-
-    <section class="intro section shell">
-      <div class="intro-grid">
-        <div>
+    <section class="hero hero-clean" aria-labelledby="hero-title">
+      <div class="shell hero-grid">
+        <div class="hero-main">
           <p class="eyebrow">FIND IT. REVIEW IT. CLEAN IT.</p>
-          <h2>Your inventory shouldn't require a treasure map.</h2>
+          <h1 id="hero-title">Your inventory shouldn't require a treasure map.</h1>
+          <div class="hero-benefits" aria-label="Cache Compass benefits">
+            <div class="hero-benefit">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg>
+              <span><strong>Powerful Local</strong><small>Search</small></span>
+            </div>
+            <div class="hero-benefit">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"></path><path d="m9 12 2 2 4-4"></path></svg>
+              <span><strong>Safety Test</strong><small>Protection</small></span>
+            </div>
+            <div class="hero-benefit">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h6l2 2h10v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6Z"></path><path d="m15 13 2 2 4-4"></path></svg>
+              <span><strong>Smart Cleanup</strong><small>Review</small></span>
+            </div>
+            <div class="hero-benefit">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="11" rx="2"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3"></path></svg>
+              <span><strong>No-Copy</strong><small>Protection</small></span>
+            </div>
+          </div>
+          <a class="button button-primary hero-button" href="#features">Explore Cache Compass</a>
         </div>
-        <div class="intro-copy">
+        <div class="hero-copy">
           <p>Cache Compass is built for Second Life residents whose inventories have grown too large for exact-name searching and folder-by-folder cleanup.</p>
           <p>It works as a <strong>local companion utility for Firestorm</strong> — not as another Second Life viewer.</p>
-          <a class="button button-primary" href="#features">Explore Cache Compass</a>
         </div>
       </div>
     </section>
@@ -71,12 +79,12 @@
         <p>Cache Compass focuses on the part Firestorm inventories make hardest: finding what you own and making sense of years of accumulated content.</p>
       </div>
 
-      <div class="feature feature-wide">
+      <div class="feature feature-wide search-feature">
         <div class="feature-copy">
           <span class="feature-number">01</span>
-          <p class="mini-title">INVENTORY SEARCH</p>
-          <h3>Search like a person, not a filename.</h3>
-          <p>Search your locally indexed Firestorm inventory using keywords, phrases, item types, and folder context instead of relying on one exact item name.</p>
+          <p class="mini-title">SEARCH LOCALLY</p>
+          <h3>Find exactly what you're looking for.</h3>
+          <p>Powerful local search with keyword matching, item-type filters, and folder-path context. Get precise results without exposing your inventory to the cloud.</p>
           <ul class="check-list">
             <li>Search item names and folder paths</li>
             <li>Filter by inventory type</li>
@@ -84,7 +92,7 @@
             <li>No Second Life login required</li>
           </ul>
         </div>
-        <figure class="app-shot">
+        <figure class="app-shot app-shot-glow">
           <img src="assets/search-interface.webp" alt="Cache Compass Search Inventory interface" loading="lazy" />
           <figcaption>Search your inventory without changing it.</figcaption>
         </figure>
@@ -137,9 +145,9 @@
           <article><span>1</span><h3>Refresh in Firestorm</h3><p>Let your inventory finish loading in Firestorm, then log out and close Firestorm so its local inventory data is up to date.</p></article>
           <article><span>2</span><h3>Search or scan locally</h3><p>Search your personal inventory or scan selected cleanup categories locally. Nothing moves in Second Life during scanning.</p></article>
           <article><span>3</span><h3>Review everything</h3><p>Inspect every proposed cleanup item and uncheck anything you want to keep before a live action is allowed.</p></article>
-          <article><span>4</span><h3>Run the Safety Test</h3><p>Cache Compass opens a temporary Second Life session, verifies the account, moves one reviewed item to Trash, verifies the move, and disconnects.</p></article>
-          <article><span>5</span><h3>Confirm in Firestorm</h3><p>Open Firestorm, inspect Trash, and confirm the Safety Test moved exactly what you expected before Move Files unlocks.</p></article>
-          <article><span>6</span><h3>Move approved items</h3><p>Cache Compass rechecks approved items, moves them to Second Life Trash, and disconnects. It never empties Trash for you.</p></article>
+          <article class="live-step"><span>4</span><h3>Run the Safety Test</h3><p>Cache Compass opens a temporary Second Life session, verifies the account, moves one reviewed item to Trash, verifies the move, and disconnects.</p></article>
+          <article class="live-step"><span>5</span><h3>Confirm in Firestorm</h3><p>Open Firestorm, inspect Trash, and confirm the Safety Test moved exactly what you expected before Move Files unlocks.</p></article>
+          <article class="live-step"><span>6</span><h3>Move approved items</h3><p>Cache Compass rechecks approved items, moves them to Second Life Trash, and disconnects. It never empties Trash for you.</p></article>
         </div>
       </div>
     </section>
