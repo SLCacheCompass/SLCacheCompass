@@ -34,23 +34,6 @@ if (features) {
   features.insertAdjacentElement('afterend', story);
 }
 
-const how = document.querySelector('#how');
-if (how) {
-  const life = document.createElement('section');
-  life.className = 'sl-life';
-  life.setAttribute('aria-label', 'The things worth keeping in Second Life');
-  life.innerHTML = `
-    <div class="sl-life-grid">
-      <article class="sl-life-card explore">
-        <div class="sl-life-copy"><strong>Keep the adventure</strong><span>Places, experiences, and landmarks that are part of your Second Life.</span></div>
-      </article>
-      <article class="sl-life-card create">
-        <div class="sl-life-copy"><strong>Keep what matters</strong><span>Homes, looks, objects, and memories — without letting the leftovers bury them.</span></div>
-      </article>
-    </div>`;
-  how.insertAdjacentElement('afterend', life);
-}
-
 const toggle = document.querySelector('.nav-toggle');
 const nav = document.querySelector('.site-nav');
 if (toggle && nav) {
