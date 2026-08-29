@@ -14,8 +14,6 @@ artStyles.href = 'art.css';
 document.head.appendChild(artStyles);
 
 // Rebuild the user-supplied wide hero image from same-origin text chunks.
-// Strip all whitespace before decoding so line endings between chunks cannot
-// invalidate the image data.
 const heroParts = Array.from({ length: 9 }, (_, i) =>
   `assets/hero-wide-${String(i).padStart(2, '0')}.txt`
 );
@@ -31,7 +29,7 @@ Promise.all(heroParts.map(src => fetch(src, { cache: 'no-store' }).then(response
     const blob = new Blob([bytes], { type: 'image/webp' });
     const heroUrl = URL.createObjectURL(blob);
     const heroImageStyle = document.createElement('style');
-    heroImageStyle.textContent = `.hero-clean::after{background-image:url("${heroUrl}")!important;background-position:center center!important;background-size:cover!important;}`;
+    heroImageStyle.textContent = `.hero-clean::after{background-image:url("${heroUrl}")!important;}`;
     document.head.appendChild(heroImageStyle);
   })
   .catch(error => {
@@ -42,7 +40,7 @@ const heroTitle = document.querySelector('#hero-title');
 const heroBenefits = document.querySelector('.hero-benefits');
 const problemStrip = document.querySelector('.problem-strip');
 if (heroTitle) {
-  heroTitle.innerHTML = '<span class="hero-the">THE</span><span class="hero-boss">INVENTORY<br>FINAL BOSS.</span>';
+  heroTitle.innerHTML = '<span class="hero-the">THE</span><span class="hero-inventory">INVENTORY</span><span class="hero-finalboss">FINAL BOSS.</span>';
 }
 if (heroBenefits && problemStrip) {
   const benefitBand = document.createElement('section');
