@@ -13,43 +13,24 @@ artStyles.rel = 'stylesheet';
 artStyles.href = 'art.css';
 document.head.appendChild(artStyles);
 
-// Rebuild the user-supplied wide hero image from same-origin text chunks.
-const heroParts = Array.from({ length: 9 }, (_, i) =>
-  `assets/hero-wide-${String(i).padStart(2, '0')}.txt`
-);
-Promise.all(heroParts.map(src => fetch(src, { cache: 'no-store' }).then(response => {
-  if (!response.ok) throw new Error(`Unable to load ${src}`);
-  return response.text();
-})))
-  .then(parts => {
-    const encoded = parts.join('').replace(/\s+/g, '');
-    const binary = atob(encoded);
-    const bytes = new Uint8Array(binary.length);
-    for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
-    const blob = new Blob([bytes], { type: 'image/webp' });
-    const heroUrl = URL.createObjectURL(blob);
-    const heroImageStyle = document.createElement('style');
-    heroImageStyle.textContent = `.hero-clean::after{background-image:url("${heroUrl}")!important;}`;
-    document.head.appendChild(heroImageStyle);
-  })
-  .catch(error => {
-    console.error('Cache Compass hero image failed to load:', error);
-  });
-
-const heroTitle = document.querySelector('#hero-title');
-const heroBenefits = document.querySelector('.hero-benefits');
-const problemStrip = document.querySelector('.problem-strip');
-if (heroTitle) {
-  heroTitle.innerHTML = '<span class="hero-the">THE</span><span class="hero-inventory">INVENTORY</span><span class="hero-finalboss">FINAL BOSS.</span>';
-}
-if (heroBenefits && problemStrip) {
-  const benefitBand = document.createElement('section');
-  benefitBand.className = 'hero-benefit-band';
-  const shell = document.createElement('div');
-  shell.className = 'shell';
-  shell.appendChild(heroBenefits);
-  benefitBand.appendChild(shell);
-  problemStrip.insertAdjacentElement('beforebegin', benefitBand);
+const heroPhoto = document.querySelector('.boss-photo');
+if (heroPhoto) {
+  const heroParts = Array.from({ length: 9 }, (_, i) =>
+    `assets/hero-wide-${String(i).padStart(2, '0')}.txt`
+  );
+  Promise.all(heroParts.map(src => fetch(src, { cache: 'no-store' }).then(response => {
+    if (!response.ok) throw new Error(`Unable to load ${src}`);
+    return response.text();
+  })))
+    .then(parts => {
+      const encoded = parts.join('').replace(/\s+/g, '');
+      const binary = atob(encoded);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+      const blob = new Blob([bytes], { type: 'image/webp' });
+      heroPhoto.style.backgroundImage = `url("${URL.createObjectURL(blob)}")`;
+    })
+    .catch(error => console.error('Cache Compass hero image failed to load:', error));
 }
 
 const features = document.querySelector('#features');
