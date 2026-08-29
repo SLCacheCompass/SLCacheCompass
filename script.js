@@ -1,23 +1,9 @@
-const assetMap = {
-  'assets/cleanup-dashboard.webp': 'assets/cleanup-dashboard.svg',
-  'assets/inventory-review.webp': 'assets/inventory-review.svg'
-};
-
-document.querySelectorAll('img[src]').forEach(img => {
-  const replacement = assetMap[img.getAttribute('src')];
-  if (replacement) img.setAttribute('src', replacement);
-});
-
-const artStyles = document.createElement('link');
-artStyles.rel = 'stylesheet';
-artStyles.href = 'art.css';
-document.head.appendChild(artStyles);
-
 const heroPhoto = document.querySelector('.boss-photo');
 if (heroPhoto) {
   const heroParts = Array.from({ length: 9 }, (_, i) =>
     `assets/hero-wide-${String(i).padStart(2, '0')}.txt`
   );
+
   Promise.all(heroParts.map(src => fetch(src, { cache: 'no-store' }).then(response => {
     if (!response.ok) throw new Error(`Unable to load ${src}`);
     return response.text();
@@ -39,7 +25,7 @@ if (features) {
   story.className = 'sl-story';
   story.setAttribute('aria-label', 'Why Second Life inventories get big');
   story.innerHTML = `
-    <div class="shell sl-story-copy">
+    <div class="sl-story-copy">
       <p class="eyebrow">HOW THE MONSTER HAPPENED</p>
       <h2>Second Life is worth collecting.<em>Your clutter isn’t.</em></h2>
       <p>You shopped. You decorated. You changed bodies. You grabbed event gifts. You saved landmarks. You unpacked the fatpack twice. You kept the demo because maybe you’d need it later. None of that was a mistake. It’s just how a Second Life inventory becomes a monster.</p>
@@ -72,8 +58,9 @@ if (toggle && nav) {
     const open = nav.classList.toggle('open');
     toggle.setAttribute('aria-expanded', String(open));
   });
+
   nav.querySelectorAll('a').forEach(a => a.addEventListener('click', () => {
     nav.classList.remove('open');
-    toggle.setAttribute('aria-expanded','false');
+    toggle.setAttribute('aria-expanded', 'false');
   }));
 }
