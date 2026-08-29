@@ -13,22 +13,29 @@ artStyles.rel = 'stylesheet';
 artStyles.href = 'art.css';
 document.head.appendChild(artStyles);
 
-// The wide hero artwork is stored in small text chunks so GitHub Pages can
-// serve the user-supplied image without depending on an external image host.
+// Rebuild the user-supplied wide hero image from same-origin text chunks.
+// Strip all whitespace before decoding so line endings between chunks cannot
+// invalidate the image data.
 const heroParts = Array.from({ length: 9 }, (_, i) =>
   `assets/hero-wide-${String(i).padStart(2, '0')}.txt`
 );
-Promise.all(heroParts.map(src => fetch(src).then(response => {
+Promise.all(heroParts.map(src => fetch(src, { cache: 'no-store' }).then(response => {
   if (!response.ok) throw new Error(`Unable to load ${src}`);
   return response.text();
 })))
   .then(parts => {
+    const encoded = parts.join('').replace(/\s+/g, '');
+    const binary = atob(encoded);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+    const blob = new Blob([bytes], { type: 'image/webp' });
+    const heroUrl = URL.createObjectURL(blob);
     const heroImageStyle = document.createElement('style');
-    heroImageStyle.textContent = `.hero-clean::after{background-image:url("data:image/webp;base64,${parts.join('').trim()}")!important;}`;
+    heroImageStyle.textContent = `.hero-clean::after{background-image:url("${heroUrl}")!important;background-position:center center!important;background-size:cover!important;}`;
     document.head.appendChild(heroImageStyle);
   })
-  .catch(() => {
-    // Keep the CSS-hosted image as a fallback if a chunk cannot be loaded.
+  .catch(error => {
+    console.error('Cache Compass hero image failed to load:', error);
   });
 
 const heroTitle = document.querySelector('#hero-title');
