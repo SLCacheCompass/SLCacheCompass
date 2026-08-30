@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-140 -140 280 280" role="img" aria-label="Cache Compass compass mark">
+  <g fill="none" stroke="#c79b51">
+    <circle r="108" stroke-width="7"/>
+    <circle r="82" stroke-width="2" opacity=".6"/>
+    <path d="M0-128 18-36 0 0-18-36Z" fill="#c79b51"/>
+    <path d="M0 128 18 36 0 0-18 36Z" fill="#587f76"/>
+    <path d="M-128 0-36-18 0 0-36 18Z" fill="#c79b51" opacity=".8"/>
+    <path d="M128 0 36-18 0 0 36 18Z" fill="#587f76" opacity=".9"/>
+  </g>
+</svg>
