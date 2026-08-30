@@ -22,11 +22,11 @@ if (heroTitle && bossCta) {
   bossCta.style.margin = '24px auto 30px';
 }
 
-// Plain-English alt account guidance. Licensing details intentionally stay out of the FAQ.
+// Plain-English alt account and avatar-license guidance.
 document.querySelectorAll('#faq details').forEach(detail => {
   const summary = detail.querySelector('summary');
   const answer = detail.querySelector('p');
   if (summary && answer && summary.textContent.trim() === 'Can I use it on an alt?') {
-    answer.textContent = 'Yes. Cache Compass works with whichever avatar is currently logged into Firestorm. To use another avatar, switch accounts in Firestorm first, then open Cache Compass. Cache Compass never asks for or stores your Second Life password.';
+    answer.textContent = 'Yes. Cache Compass works with whichever avatar is currently logged into Firestorm. To use another avatar, switch accounts in Firestorm first, then open Cache Compass. The standard Cache Compass license covers up to 3 avatars, with 5- and 10-avatar options available if you need more. Cache Compass never asks for or stores your Second Life password.';
   }
 });
