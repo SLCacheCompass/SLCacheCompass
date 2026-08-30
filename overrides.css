@@ -7,6 +7,7 @@
 .inventory-intro{max-width:900px;margin-bottom:34px}
 .inventory-intro>p{max-width:860px;color:#aeb5b1;font-size:17px;line-height:1.75}
 .inventory-intro>p+ p{margin-top:14px}
+.inventory-intro .inventory-welcome,.inventory-intro .inventory-welcome strong{color:var(--teal2)}
 .inventory-intro .inventory-clutter-copy{color:var(--gold2)}
 .inventory-thoughts{margin:0 0 72px;padding:32px 0 38px;border-top:1px solid rgba(199,155,76,.16);border-bottom:1px solid rgba(199,155,76,.12)}
 .inventory-thoughts>.eyebrow{margin-bottom:30px;color:var(--teal2)}
