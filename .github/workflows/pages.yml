@@ -46,7 +46,11 @@ jobs:
           dig +short slcachecompass.com AAAA || true
           echo "=== DNS: www.slcachecompass.com CNAME ==="
           dig +short www.slcachecompass.com CNAME || true
-          echo "=== HTTP ==="
+          echo "=== ROOT HTTP ==="
           curl -sSIL --max-time 20 --retry 2 --retry-delay 2 http://slcachecompass.com/ || true
-          echo "=== HTTPS ==="
+          echo "=== ROOT HTTPS ==="
           curl -sSIL --max-time 20 --retry 2 --retry-delay 2 https://slcachecompass.com/ || true
+          echo "=== WWW HTTP ==="
+          curl -sSIL --max-time 20 --retry 2 --retry-delay 2 http://www.slcachecompass.com/ || true
+          echo "=== WWW HTTPS ==="
+          curl -sSIL --max-time 20 --retry 2 --retry-delay 2 https://www.slcachecompass.com/ || true
