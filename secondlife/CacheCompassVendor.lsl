@@ -171,8 +171,11 @@ default
         key toucher = llDetectedKey(0);
         if (toucher == llGetOwner())
         {
+            string statusText = "NOT READY";
+            if (READY) statusText = "READY";
+
             llOwnerSay(
-                "Cache Compass vendor status: " + (READY ? "READY" : "NOT READY") +
+                "Cache Compass vendor status: " + statusText +
                 " | Owner UUID: " + (string)llGetOwner() +
                 " | Object UUID: " + (string)llGetKey()
             );
