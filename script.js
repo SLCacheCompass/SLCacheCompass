@@ -22,6 +22,15 @@ if (heroTitle && bossCta) {
   bossCta.style.margin = '24px auto 30px';
 }
 
+// Make the footer's Back to top control reliable even when the URL already contains #top.
+const backToTop = document.querySelector('.footer-links a[href="#top"]');
+if (backToTop) {
+  backToTop.addEventListener('click', event => {
+    event.preventDefault();
+    window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+  });
+}
+
 // Plain-English alt account and avatar-license guidance.
 document.querySelectorAll('#faq details').forEach(detail => {
   const summary = detail.querySelector('summary');
