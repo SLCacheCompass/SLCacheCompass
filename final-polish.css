@@ -1,5 +1,14 @@
 /* Final section-specific corrections. Keep these overrides separate so the story and privacy panels cannot interfere with one another. */
 
+/* Restore the original bold hero headline treatment. */
+.boss-copy h1{
+  font-family:Impact,'Arial Narrow',Arial,sans-serif !important;
+  font-weight:900 !important;
+  letter-spacing:.018em !important;
+  line-height:.9 !important;
+  text-rendering:auto !important;
+}
+
 /* Restore the photo treatment on “A dead end for inventory clutter.” */
 .sl-story{
   background:#05090a !important;
@@ -31,6 +40,9 @@
 }
 
 @media(max-width:760px){
+  .boss-copy h1{
+    letter-spacing:.01em !important;
+  }
   .privacy-panel{
     background-color:#071012 !important;
     background-image:linear-gradient(145deg,#071012 0%,#081416 58%,#071012 100%) !important;
