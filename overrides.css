@@ -21,6 +21,12 @@
 .tag-cloud,.protection-grid,.status-pill,.badge{display:none !important}
 .pricing-grid.pricing-grid-three{grid-template-columns:repeat(3,minmax(0,1fr)) !important;max-width:1120px;margin-left:auto;margin-right:auto}
 .pricing-grid-three .price-card{height:100%}
+.price-card .price-was{margin:20px 0 2px;color:#7f8884;font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase}
+.price-card .price-was span{margin-right:9px}
+.price-card .price-was strong{position:relative;display:inline-block;color:#9ca5a1;font-size:21px;font-weight:700;letter-spacing:.01em;text-transform:none}
+.price-card .price-was strong::after{content:'';position:absolute;left:-6px;right:-6px;top:52%;height:2px;border-radius:99px;background:var(--gold2);transform:rotate(-8deg);box-shadow:0 0 9px rgba(199,155,76,.36)}
+.price-card .price{margin-top:4px;margin-bottom:2px}
+.price-card .launch-price-label{margin:0 0 18px;color:var(--teal2);font-size:11px;font-weight:800;letter-spacing:.18em;text-transform:uppercase}
 .pricing-note{max-width:760px;margin:28px auto 0;text-align:center;color:#9da6a2;line-height:1.65}
 .launch-status-text{margin-top:24px;color:#9da6a2;font-size:14px}
 @media(max-width:1200px){.boss-copy h1 span:first-child{font-size:clamp(62px,6.2vw,88px)}.boss-copy h1 span:last-child{font-size:clamp(56px,5.5vw,80px)}}
