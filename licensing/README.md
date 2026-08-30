@@ -4,9 +4,11 @@ This folder contains the Cache Compass licensing backend. It is designed for Sup
 
 ## License tiers
 
-- 3 avatars — $24.99
-- 5 avatars — $39.99
-- 10 avatars — $69.99
+Current planned launch pricing:
+
+- 3 avatars — $24.99 launch ($29.99 regular)
+- 5 avatars — $34.99 launch ($39.99 regular)
+- 10 avatars — $69.99 launch ($74.99 regular)
 
 Every tier unlocks the same Cache Compass features. The tier only controls the number of registered Second Life avatar UUIDs.
 
