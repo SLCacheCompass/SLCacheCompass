@@ -15,8 +15,8 @@ if (features) {
           <span class="feature-number">01</span>
           <p class="mini-title">START HERE</p>
           <h3>Start with the viewer you already use.</h3>
-          <p>Open Firestorm, let Inventory finish loading, then use Start Here. Cache Compass confirms the supported Firestorm session, binds to the avatar currently signed in, and lays out the workflow before anything is searched or moved.</p>
-          <p><strong>There is no separate Second Life login or manual account picker.</strong> Your viewer stays authenticated; Cache Compass works alongside it.</p>
+          <p>Open Firestorm and let Inventory finish loading. Then use Start Here. Cache Compass detects the avatar already signed in and works alongside your viewer.</p>
+          <p><strong>No separate SL login. No manual account picker.</strong></p>
         </div>
         <figure class="app-shot app-shot-real"><img src="assets/screens/welcome.webp" alt="Cache Compass Welcome screen with Firestorm detected and the guided Start Here workflow" width="600" height="355" loading="lazy" /><figcaption>The real Cache Compass Welcome screen with Firestorm detected and the guided Start Here workflow.</figcaption></figure>
       </div>
@@ -26,9 +26,8 @@ if (features) {
           <span class="feature-number">02</span>
           <p class="mini-title">PROTECTED FOLDERS</p>
           <h3>Protect what matters before cleanup begins.</h3>
-          <p>Mark exact folders Cleanup must never include — full-perm masters, favorite wearables, saved outfits, current projects, business or vendor stock, HUDs, scripts, and sentimental or irreplaceable inventory.</p>
-          <p>Built-in protections cover personal-inventory-only cleanup, no-copy inventory, system folders, and your exact folder choices. <strong>Search Only can still find items inside protected folders.</strong></p>
-          <div class="tag-cloud"><span>No-copy protection</span><span>System folders</span><span>Exact folder IDs</span><span>Search still works</span></div>
+          <p>Protect any folders Cleanup should never touch — outfits, projects, business stock, HUDs, scripts, or anything irreplaceable.</p>
+          <p>Built-in safeguards protect sensitive inventory, while <strong>Search Only can still find what’s inside.</strong></p>
         </div>
         <figure class="app-shot app-shot-real"><img src="assets/screens/protected.webp" alt="Cache Compass Protected Folders screen showing user-selected folders and built-in protections" width="600" height="355" loading="lazy" /><figcaption>Protected Folders shows exact user exclusions alongside Cache Compass's built-in safeguards.</figcaption></figure>
       </div>
@@ -42,7 +41,7 @@ if (features) {
     const image = searchFeature.querySelector('img');
     const caption = searchFeature.querySelector('figcaption');
     if (number) number.textContent = '03';
-    if (copy) copy.innerHTML = `<span class="feature-number">03</span><p class="mini-title">SEARCH ONLY</p><h3>Find it without touching it.</h3><p>Search the way you remember an item instead of guessing its exact inventory name. Cache Compass looks through names and folder paths while accounting for punctuation, formatting, and word order.</p><p><strong>Search Only is read-only.</strong> It never moves files. Review what it finds, export the results if you want, then use those results to locate what you need in Second Life.</p><div class="tag-cloud"><span>Read-only</span><span>Store names</span><span>Body sizes</span><span>Product names</span><span>Folder paths</span></div>`;
+    if (copy) copy.innerHTML = `<span class="feature-number">03</span><p class="mini-title">SEARCH ONLY</p><h3>You remember the words. Cache Compass finds the mess.</h3><p>Creators all name things differently — punctuation, symbols, abbreviations, body tags, version numbers, folder names that don’t match the product name. You shouldn’t have to guess the exact wording.</p><p>Type what you remember — <strong>Reborn shirt</strong>, <strong>Blueberry jeans</strong>, <strong>Legacy heels</strong>, <strong>DEMO</strong> — and let Cache Compass use those words and folder paths to narrow it down.</p><p><strong>Search Only is read-only.</strong> It never moves files.</p>`;
     if (image) {
       image.src = 'assets/screens/search.webp';
       image.alt = 'Cache Compass Search Only screen showing the read-only inventory search interface';
@@ -57,7 +56,7 @@ if (features) {
     const copy = cleanupFeature.querySelector('.feature-copy');
     const image = cleanupFeature.querySelector('img');
     const caption = cleanupFeature.querySelector('figcaption');
-    if (copy) copy.innerHTML = `<span class="feature-number">04</span><p class="mini-title">CLEANUP</p><h3>Find the clutter. Review it. Then clean it.</h3><p>Duplicate Cleanup and Keyword Cleanup can work separately or together. Choose the inventory types you want included, add folder-copy or empty-folder options when useful, and let Cache Compass build the review list.</p><p>Nothing moves while the list is being built. <strong>Results open in Review so you can decide what actually leaves your inventory.</strong></p><div class="tag-cloud"><span>Exact copies</span><span>Keyword cleanup</span><span>Inventory types</span><span>Folder copies</span><span>Empty folders</span></div>`;
+    if (copy) copy.innerHTML = `<span class="feature-number">04</span><p class="mini-title">CLEANUP</p><h3>Stop hunting for the same junk one folder at a time.</h3><p>Landmarks. Notecards. Demos. Old body sizes. Empty folders. Duplicate copies. Tell Cache Compass what kind of clutter you’re looking for and it builds the pile for you.</p><p><strong>Nothing moves until you review it. You decide what goes.</strong></p>`;
     if (image) {
       image.src = 'assets/screens/cleanup.webp';
       image.alt = 'Cache Compass Cleanup screen showing Duplicate Cleanup and Keyword Cleanup controls';
@@ -72,37 +71,25 @@ if (features) {
     const copy = reviewFeature.querySelector('.feature-copy');
     const image = reviewFeature.querySelector('img');
     const caption = reviewFeature.querySelector('figcaption');
-    if (copy) copy.innerHTML = `<span class="feature-number">05</span><p class="mini-title">REVIEW FIRST</p><h3>Nothing moves until you approve it.</h3><p>Cache Compass can surface thousands of candidates without making the decision for you. The Review screen gives you the names, types, folders, item counts, and inventory UUIDs before any move is approved.</p><p>This real cleanup run surfaced <strong>5,485 items ready for review</strong> while the status still read: <strong>Nothing has moved yet.</strong> Select only what you want Firestorm to move.</p>`;
+    if (copy) copy.innerHTML = `<span class="feature-number">05</span><p class="mini-title">REVIEW &amp; MOVE</p><h3>You choose what goes. Cache Compass moves it to Trash.</h3><p>Review the matches, select what you want removed, and Cache Compass moves those items to your Second Life Trash.</p><p><strong>Nothing is permanently deleted by Cache Compass. Empty Trash in-world when you’re ready.</strong></p>`;
     if (image) {
       image.src = 'assets/screens/review.webp';
-      image.alt = 'Cache Compass Review screen with 5,485 items ready for review before anything is moved';
+      image.alt = 'Cache Compass Review screen showing items ready for review before anything is moved';
       image.width = 600;
       image.height = 355;
     }
-    if (caption) caption.textContent = 'A real Review run with 5,485 items surfaced before any move is approved.';
+    if (caption) caption.textContent = 'Review the matches, choose what goes, and move only what you approve.';
   }
 
   const story = document.createElement('section');
   story.className = 'sl-story';
-  story.setAttribute('aria-label', 'Why Second Life inventories get big');
+  story.setAttribute('aria-label', 'A dead end for inventory clutter');
   story.innerHTML = `
     <div class="sl-story-copy">
-      <p class="eyebrow">HOW THE MONSTER HAPPENED</p>
-      <h2>Second Life is worth collecting.<em>Your clutter isn’t.</em></h2>
-      <p>You shopped. You decorated. You changed bodies. You grabbed event gifts. You saved landmarks. You unpacked the fatpack twice. You kept the demo because maybe you’d need it later. None of that was a mistake. It’s just how a Second Life inventory becomes a monster.</p>
-      <p><strong>Cache Compass was built for the monster.</strong></p>
+      <h2>A dead end for inventory clutter.</h2>
+      <p>Keep what matters. Find what doesn’t. Review it once, move it to Trash, and stop letting years of leftovers take over your inventory.</p>
     </div>`;
   features.insertAdjacentElement('afterend', story);
-}
-
-const privacy = document.querySelector('#privacy');
-if (privacy) {
-  privacy.insertAdjacentHTML('beforeend', `
-    <figure class="app-shot app-shot-real" style="margin:34px 0 0">
-      <img src="assets/screens/welcome-safety.webp" alt="Cache Compass Welcome screen showing built-in protections, restore guidance, and important inventory safety notes" width="600" height="356" loading="lazy" />
-      <figcaption>Welcome-screen safety guidance, built-in protections, restore behavior, and inventory safety notes.</figcaption>
-    </figure>
-  `);
 }
 
 const toggle = document.querySelector('.nav-toggle');

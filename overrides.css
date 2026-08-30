@@ -5,12 +5,20 @@
 .boss-copy h1 span:last-child{font-size:clamp(62px,4.9vw,94px);margin-top:10px}
 .boss-photo{background-image:url('assets/header-fixed.webp') !important;background-position:center center !important;background-size:cover !important;background-repeat:no-repeat !important}
 .inventory-intro{max-width:900px;margin-bottom:34px}
-.inventory-intro>p:last-child{max-width:860px;color:#aeb5b1;font-size:17px;line-height:1.75}
+.inventory-intro>p{max-width:860px;color:#aeb5b1;font-size:17px;line-height:1.75}
+.inventory-intro>p+ p{margin-top:14px}
+.inventory-intro .inventory-punchline{margin-top:22px;color:var(--gold2)}
 .inventory-thoughts{margin:0 0 66px;padding:30px 0 4px;border-top:1px solid rgba(199,155,76,.16)}
 .inventory-thoughts>.eyebrow{margin-bottom:16px;color:var(--teal2)}
 .inventory-thought-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
 .inventory-thought-grid article{padding:24px 26px;border:1px solid rgba(199,155,76,.17);border-left:2px solid rgba(105,211,204,.46);background:linear-gradient(145deg,rgba(10,20,22,.82),rgba(7,13,14,.7));border-radius:12px}
 .inventory-thought-grid strong{display:block;color:var(--gold2);font-size:13px;letter-spacing:.08em;margin-bottom:8px}
 .inventory-thought-grid span{display:block;color:#a8b0ac;font-size:14px;line-height:1.6}
+.tag-cloud,.protection-grid,.status-pill,.badge{display:none !important}
+.pricing-grid.pricing-grid-three{grid-template-columns:repeat(3,minmax(0,1fr)) !important;max-width:1120px;margin-left:auto;margin-right:auto}
+.pricing-grid-three .price-card{height:100%}
+.pricing-note{max-width:760px;margin:28px auto 0;text-align:center;color:#9da6a2;line-height:1.65}
+.launch-status-text{margin-top:24px;color:#9da6a2;font-size:14px}
 @media(max-width:1200px){.boss-copy h1 span:first-child{font-size:clamp(62px,6.2vw,88px)}.boss-copy h1 span:last-child{font-size:clamp(56px,5.5vw,80px)}}
-@media(max-width:760px){.boss-copy h1{letter-spacing:0}.boss-copy h1 span:first-child,.boss-copy h1 span:last-child{font-size:clamp(52px,14vw,76px);white-space:normal}.inventory-thought-grid{grid-template-columns:1fr}.inventory-intro>p:last-child{font-size:16px}}
+@media(max-width:900px){.pricing-grid.pricing-grid-three{grid-template-columns:1fr !important;max-width:680px}}
+@media(max-width:760px){.boss-copy h1{letter-spacing:0}.boss-copy h1 span:first-child,.boss-copy h1 span:last-child{font-size:clamp(52px,14vw,76px);white-space:normal}.inventory-thought-grid{grid-template-columns:1fr}.inventory-intro>p{font-size:16px}}
