@@ -39,27 +39,15 @@
   background-repeat:no-repeat !important;
 }
 
-/* Small Best Value badge on the 10-avatar tier. */
-.pricing-grid-three .price-card:nth-child(3)::after{
-  content:"";
-  position:absolute;
-  top:12px;
-  right:14px;
-  width:clamp(92px,7vw,116px);
-  aspect-ratio:1;
-  background:url('assets/best-value-badge.png') center/contain no-repeat;
-  pointer-events:none;
-  z-index:2;
-  transform:rotate(-3deg);
-  filter:drop-shadow(0 8px 14px rgba(0,0,0,.28));
-}
-
-@media(max-width:900px){
-  .pricing-grid-three .price-card:nth-child(3)::after{
-    width:104px;
-    top:12px;
-    right:16px;
-  }
+/* Keep the 10-avatar pricing card completely clean: no badge artwork or decorative overlays. */
+.pricing-grid-three .price-card:nth-child(3)::before,
+.pricing-grid-three .price-card:nth-child(3)::after,
+.pricing-grid-three .price-card:nth-child(3) > img,
+.pricing-grid-three .price-card:nth-child(3) > svg,
+.pricing-grid-three .price-card:nth-child(3) > .badge{
+  display:none !important;
+  content:none !important;
+  background:none !important;
 }
 
 @media(max-width:760px){
@@ -72,10 +60,5 @@
     background-position:center !important;
     background-size:cover !important;
     background-repeat:no-repeat !important;
-  }
-  .pricing-grid-three .price-card:nth-child(3)::after{
-    width:92px;
-    top:10px;
-    right:12px;
   }
 }
