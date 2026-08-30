@@ -30,6 +30,17 @@ Every tier unlocks the same Cache Compass features. The tier only controls the n
 - `register-avatar` — adds a Second Life avatar UUID to a license if a slot is available.
 - `linden-purchase` — narrow Second Life kiosk endpoint. GET returns current L$ tier prices to an authorized kiosk; POST records a paid purchase, registers the buying avatar, and returns the license key.
 
+## Current live test status
+
+The Supabase project has already successfully tested this core loop through the dashboard:
+
+1. Issue a 3-avatar test license.
+2. Validate that the license is active with 0/3 slots used.
+3. Register a test avatar UUID.
+4. Validate again and confirm 1/3 slots used, 2 remaining, and the test avatar recognized as registered.
+
+The kiosk endpoint and LSL vendor are intentionally still on the `licensing-backend` branch until an in-world payment test is complete.
+
 ## In-world L$ purchase flow
 
 1. The vendor starts with Pay disabled and calls `linden-purchase` with GET.
@@ -45,7 +56,7 @@ The LSL `money` event does not expose Linden Lab's official transaction ID. Cach
 
 ## Supabase deployment
 
-The first three functions are already being tested through the Supabase dashboard. For the kiosk function, configure these additional Edge Function secrets before deployment:
+For the kiosk function, configure these additional Edge Function secrets before deployment:
 
 - `KIOSK_SHARED_SECRET` — a new long random secret used only by the kiosk.
 - `KIOSK_OWNER_UUID` — the Second Life UUID of the avatar that owns the live vendor.
@@ -61,6 +72,8 @@ Then copy `secondlife/CacheCompassVendor.lsl` into a root-prim script in Second 
 
 - `ENDPOINT_URL` — the deployed Supabase `linden-purchase` function URL.
 - `KIOSK_SHARED_SECRET` — the same kiosk-only secret stored in Supabase.
+
+The vendor fetches prices from the server at startup, so final L$ prices can be changed server-side without editing the LSL script each time.
 
 Do not place `LICENSE_ISSUER_SECRET`, the Supabase service-role key, database password, or any other master credential in the LSL script, website, or public repository.
 
