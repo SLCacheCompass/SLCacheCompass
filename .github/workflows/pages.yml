@@ -23,12 +23,30 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
+
       - name: Upload site
         uses: actions/upload-pages-artifact@v4
         with:
           path: '.'
+
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+      - name: Check custom domain after deploy
+        continue-on-error: true
+        shell: bash
+        run: |
+          echo "=== DNS: slcachecompass.com A ==="
+          dig +short slcachecompass.com A || true
+          echo "=== DNS: slcachecompass.com AAAA ==="
+          dig +short slcachecompass.com AAAA || true
+          echo "=== DNS: www.slcachecompass.com CNAME ==="
+          dig +short www.slcachecompass.com CNAME || true
+          echo "=== HTTP ==="
+          curl -sSIL --max-time 20 --retry 2 --retry-delay 2 http://slcachecompass.com/ || true
+          echo "=== HTTPS ==="
+          curl -sSIL --max-time 20 --retry 2 --retry-delay 2 https://slcachecompass.com/ || true
