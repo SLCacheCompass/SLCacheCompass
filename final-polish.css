@@ -1,0 +1,41 @@
+/* Final section-specific corrections. Keep these overrides separate so the story and privacy panels cannot interfere with one another. */
+
+/* Restore the photo treatment on “A dead end for inventory clutter.” */
+.sl-story{
+  background:#05090a !important;
+}
+.sl-story:before{
+  display:block !important;
+  content:"" !important;
+  position:absolute !important;
+  inset:0 !important;
+  background:url('https://live.staticflickr.com/65535/55451109114_1f29f3c978_b.jpg') center/cover no-repeat !important;
+  z-index:-2 !important;
+}
+.sl-story:after{
+  display:block !important;
+  content:"" !important;
+  position:absolute !important;
+  inset:0 !important;
+  background:linear-gradient(90deg,rgba(3,7,8,.97) 0%,rgba(3,7,8,.88) 34%,rgba(3,7,8,.42) 64%,rgba(3,7,8,.18) 100%),linear-gradient(0deg,rgba(3,7,8,.42),transparent 46%) !important;
+  z-index:-1 !important;
+}
+
+/* Privacy/password section: clean dark panel, no photograph. */
+.privacy-panel{
+  background-color:#071012 !important;
+  background-image:linear-gradient(145deg,#071012 0%,#081416 58%,#071012 100%) !important;
+  background-position:center !important;
+  background-size:cover !important;
+  background-repeat:no-repeat !important;
+}
+
+@media(max-width:760px){
+  .privacy-panel{
+    background-color:#071012 !important;
+    background-image:linear-gradient(145deg,#071012 0%,#081416 58%,#071012 100%) !important;
+    background-position:center !important;
+    background-size:cover !important;
+    background-repeat:no-repeat !important;
+  }
+}
