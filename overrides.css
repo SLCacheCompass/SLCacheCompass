@@ -1,5 +1,5 @@
 .boss-the{display:none}
-.boss-kicker{margin-bottom:20px;font-size:clamp(13px,1vw,16px);letter-spacing:.3em}
+.boss-kicker{margin-bottom:18px;font-size:clamp(17px,1.35vw,21px);letter-spacing:.24em}
 .boss-copy h1{letter-spacing:.005em;line-height:.9}
 .boss-copy h1 span:first-child{font-size:clamp(68px,5.4vw,104px)}
 .boss-copy h1 span:last-child{font-size:clamp(62px,4.9vw,94px);margin-top:10px}
