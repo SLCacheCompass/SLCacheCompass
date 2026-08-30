@@ -3,7 +3,7 @@
 .boss-copy h1{letter-spacing:.005em;line-height:.9}
 .boss-copy h1 span:first-child{font-size:clamp(68px,5.4vw,104px)}
 .boss-copy h1 span:last-child{font-size:clamp(62px,4.9vw,94px);margin-top:10px}
-.boss-photo{background-image:url('assets/inventory-hero.webp') !important;background-position:center center !important;background-size:cover !important;background-repeat:no-repeat !important}
+.boss-photo{background-image:url('assets/header-suitcase-20260830.webp') !important;background-position:right center !important;background-size:cover !important;background-repeat:no-repeat !important}
 .inventory-intro{max-width:900px;margin-bottom:34px}
 .inventory-intro>p{max-width:860px;color:#aeb5b1;font-size:17px;line-height:1.75}
 .inventory-intro>p+ p{margin-top:14px}
