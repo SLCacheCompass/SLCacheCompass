@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Cache Compass Back Office</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="release.css">
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">OWNER ACCESS</p>
+      <h1>Cache Compass Back Office</h1>
+    </div>
+    <button id="sign-out" class="button quiet" hidden>Sign out</button>
+  </header>
+
+  <main>
+    <section id="setup-warning" class="panel warning" hidden>
+      <h2>Setup required</h2>
+      <p>Copy <code>config.example.js</code> to <code>config.js</code> and add the Supabase project values.</p>
+    </section>
+
+    <section id="login-panel" class="panel auth-panel">
+      <p class="eyebrow">SECURE SIGN-IN</p>
+      <h2>Send an owner sign-in link</h2>
+      <p>No back-office password is stored in this website. Supabase sends a one-time sign-in link to the approved owner email.</p>
+      <form id="login-form">
+        <label>Email <input id="login-email" type="email" autocomplete="email" required></label>
+        <button class="button primary" type="submit">Send sign-in link</button>
+      </form>
+      <p id="login-message" class="message" role="status"></p>
+    </section>
+
+    <section id="app" hidden>
+      <div class="toolbar panel">
+        <div class="search-group">
+          <label>Find a customer, avatar, UUID, email, or license ending
+            <input id="search" type="search" placeholder="Avatar name, UUID, email, or last 4">
+          </label>
+          <label>Status
+            <select id="status-filter">
+              <option value="">All statuses</option>
+              <option value="active">Active</option>
+              <option value="suspended">Suspended</option>
+              <option value="revoked">Revoked</option>
+            </select>
+          </label>
+          <button id="search-button" class="button primary">Search</button>
+        </div>
+        <div class="toolbar-actions">
+          <button id="new-license-button" class="button gold">Issue license</button>
+          <button id="export-button" class="button quiet">Export CSV</button>
+        </div>
+      </div>
+
+      <section id="issue-panel" class="panel" hidden>
+        <div class="section-title"><div><p class="eyebrow">MANUAL OR TEST SALE</p><h2>Issue a license</h2></div><button id="close-issue" class="icon-button" aria-label="Close">×</button></div>
+        <form id="issue-form" class="form-grid">
+          <label>Tier<select name="tier"><option value="3">3 avatars</option><option value="5">5 avatars</option><option value="10">10 avatars</option></select></label>
+          <label>Record type<select name="paymentMethod"><option value="manual">Manual sale</option><option value="test">Test license</option></select></label>
+          <label>Avatar UUID<input name="purchaserAvatarUuid" placeholder="Optional"></label>
+          <label>Avatar name<input name="purchaserAvatarName" placeholder="Optional"></label>
+          <label>Payment amount<input name="paymentAmount" type="number" min="0" step="0.01" placeholder="Optional"></label>
+          <label>Currency<input name="paymentCurrency" value="USD" maxlength="12"></label>
+          <label class="wide">External receipt / transaction ID<input name="externalTransactionId" placeholder="Optional but recommended"></label>
+          <button class="button gold" type="submit">Create license</button>
+        </form>
+        <div id="issued-license" class="issued" hidden></div>
+      </section>
+
+      <section class="panel release-panel">
+        <div><p class="eyebrow">CUSTOMER DOWNLOAD</p><h2>Publish a release</h2></div>
+        <p class="muted">The installer stays private. Publishing a new version makes it the active download and gives licensed customers a ten-minute signed link.</p>
+        <form id="release-form" class="release-form">
+          <label>Version<input name="version" required placeholder="1.0.0" pattern="[0-9]+\.[0-9]+\.[0-9]+([+-][0-9A-Za-z.-]+)?"></label>
+          <label class="release-file">Installer or ZIP<input name="file" type="file" accept=".exe,.msi,.zip" required></label>
+          <label class="wide">Release notes<textarea name="releaseNotes" rows="3" placeholder="What changed in this release"></textarea></label>
+          <button class="button gold" type="submit">Upload and publish</button>
+        </form>
+        <p id="release-message" class="message" role="status"></p>
+      </section>
+
+      <div class="summary-row">
+        <p id="result-count">0 licenses</p>
+        <p id="app-message" class="message" role="status"></p>
+      </div>
+      <section id="licenses" class="license-list" aria-live="polite"></section>
+    </section>
+  </main>
+
+  <template id="license-template">
+    <article class="license-card panel">
+      <div class="license-head">
+        <div><span class="status"></span><h2 class="license-label"></h2><p class="license-meta"></p></div>
+        <div class="license-actions"></div>
+      </div>
+      <div class="facts"></div>
+      <div class="columns">
+        <section><h3>Current avatars</h3><div class="avatars"></div></section>
+        <section><h3>Customer & payment</h3><div class="orders"></div></section>
+      </div>
+      <details><summary>Avatar history and audit trail</summary><div class="history"></div></details>
+    </article>
+  </template>
+
+  <script src="config.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

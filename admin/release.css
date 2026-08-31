@@ -1,0 +1,25 @@
+textarea {
+  width: 100%;
+  border: 1px solid rgba(102, 212, 206, .25);
+  border-radius: 8px;
+  background: #050a0b;
+  color: var(--cream);
+  padding: 9px 12px;
+  font: inherit;
+  resize: vertical;
+}
+
+.release-panel { margin-top: 14px; }
+.release-form {
+  display: grid;
+  grid-template-columns: 180px minmax(280px, 1fr) auto;
+  gap: 13px;
+  align-items: end;
+}
+.release-form .wide { grid-column: 1 / -1; }
+.release-file input { padding: 7px; }
+
+@media (max-width: 700px) {
+  .release-form { grid-template-columns: 1fr; }
+  .release-form .wide { grid-column: auto; }
+}
