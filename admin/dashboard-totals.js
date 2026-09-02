@@ -5,6 +5,7 @@ const activeCustomersEl = document.querySelector('#metric-active-customers');
 const attachedAltsEl = document.querySelector('#metric-attached-alts');
 const resolvedNames = new Map();
 let supabase = null;
+let refreshRun = 0;
 
 if (config && activeCustomersEl && attachedAltsEl) {
   supabase = createClient(config.supabaseUrl, config.supabaseAnonKey);
@@ -15,6 +16,7 @@ if (config && activeCustomersEl && attachedAltsEl) {
 }
 
 async function loadCurrentTotals() {
+  const runId = ++refreshRun;
   try {
     const { data } = await supabase.auth.getSession();
     if (!data.session) return;
@@ -50,8 +52,9 @@ async function loadCurrentTotals() {
 
     activeCustomersEl.textContent = String(activeCustomerKeys.size);
     attachedAltsEl.textContent = String(attachedAlts);
-    await refreshAvatarNames(licenses, data.session.access_token);
     applyResolvedNameLabels();
+
+    await refreshAvatarNames(licenses, data.session.access_token, runId);
   } catch (error) {
     activeCustomersEl.textContent = '—';
     attachedAltsEl.textContent = '—';
@@ -59,36 +62,69 @@ async function loadCurrentTotals() {
   }
 }
 
-async function refreshAvatarNames(licenses, accessToken) {
-  if (!config.nameResolverFunctionUrl) return;
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function collectAvatarUuids(licenses) {
   const uuids = new Set();
   for (const license of licenses) {
     if (license.purchaser_avatar_uuid) uuids.add(String(license.purchaser_avatar_uuid).trim().toLowerCase());
-    for (const avatar of license.avatars || []) if (avatar.avatar_uuid) uuids.add(String(avatar.avatar_uuid).trim().toLowerCase());
+    for (const avatar of license.avatars || []) {
+      if (avatar.avatar_uuid) uuids.add(String(avatar.avatar_uuid).trim().toLowerCase());
+    }
   }
+  return [...uuids].filter(Boolean);
+}
 
-  const all = [...uuids].filter(Boolean);
-  for (let index = 0; index < all.length; index += 50) {
-    const batch = all.slice(index, index + 50);
-    try {
-      const response = await fetch(config.nameResolverFunctionUrl, {
-        method: 'POST',
-        headers: {
-          authorization: `Bearer ${accessToken}`,
-          'content-type': 'application/json',
-        },
-        body: JSON.stringify({ uuids: batch }),
+async function requestResolvedNames(uuids, accessToken) {
+  for (let index = 0; index < uuids.length; index += 50) {
+    const batch = uuids.slice(index, index + 50);
+    const response = await fetch(config.nameResolverFunctionUrl, {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${accessToken}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({ uuids: batch }),
+    });
+
+    if (!response.ok) {
+      console.debug('Avatar name resolver returned', response.status);
+      continue;
+    }
+
+    const result = await response.json();
+    for (const row of result.names || []) {
+      const uuid = String(row.avatar_uuid || '').trim().toLowerCase();
+      if (!uuid) continue;
+      resolvedNames.set(uuid, {
+        legacyName: String(row.legacy_name || '').trim(),
+        displayName: String(row.display_name || '').trim(),
       });
-      if (!response.ok) continue;
-      const result = await response.json();
-      for (const row of result.names || []) {
-        const uuid = String(row.avatar_uuid || '').trim().toLowerCase();
-        if (!uuid) continue;
-        resolvedNames.set(uuid, {
-          legacyName: String(row.legacy_name || '').trim(),
-          displayName: String(row.display_name || '').trim(),
-        });
-      }
+    }
+  }
+}
+
+async function refreshAvatarNames(licenses, accessToken, runId) {
+  if (!config.nameResolverFunctionUrl) return;
+  const all = collectAvatarUuids(licenses);
+  if (!all.length) return;
+
+  // The first request queues UUIDs. The in-world SL worker resolves them
+  // asynchronously, so check the cache again instead of requiring a page reload.
+  const delays = [0, 10000, 10000, 10000];
+  for (const delay of delays) {
+    if (runId !== refreshRun) return;
+    if (delay) await sleep(delay);
+    if (runId !== refreshRun) return;
+
+    const unresolved = all.filter((uuid) => !resolvedNames.has(uuid));
+    if (!unresolved.length) return;
+
+    try {
+      await requestResolvedNames(unresolved, accessToken);
+      applyResolvedNameLabels();
     } catch (error) {
       console.debug('Avatar name resolver is not available yet.', error);
       return;
@@ -116,8 +152,7 @@ function ensureLegacyLine(parent, legacyName, className = 'resolved-legacy-name'
     if (strong) strong.insertAdjacentElement('afterend', line);
     else parent.prepend(line);
   }
-  const text = `Legacy: ${legacyName}`;
-  if (line.textContent !== text) line.textContent = text;
+  line.textContent = `Legacy: ${legacyName}`;
 }
 
 function applyResolvedNameLabels() {
@@ -126,12 +161,12 @@ function applyResolvedNameLabels() {
     const name = cell?.querySelector('strong');
     const uuid = row.querySelector('.uuid-short')?.getAttribute('title')?.trim();
     if (!cell || !name || !uuid) continue;
+
     const resolved = lookupName(uuid);
     if (resolved) {
-      const preferred = resolved.displayName || resolved.legacyName || uuid;
-      if (name.textContent !== preferred) name.textContent = preferred;
+      name.textContent = resolved.displayName || resolved.legacyName || uuid;
       ensureLegacyLine(cell, resolved.legacyName);
-    } else if (/^Customer •••• /.test(name.textContent || '') && name.textContent !== uuid) {
+    } else if (/^Customer •••• /.test(name.textContent || '')) {
       name.textContent = uuid;
     }
   }
@@ -142,8 +177,7 @@ function applyResolvedNameLabels() {
   if (drawerName && drawerUuid && !drawerUuid.startsWith('No primary')) {
     const resolved = lookupName(drawerUuid);
     if (resolved) {
-      const preferred = resolved.displayName || resolved.legacyName || drawerUuid;
-      if (drawerName.textContent !== preferred) drawerName.textContent = preferred;
+      drawerName.textContent = resolved.displayName || resolved.legacyName || drawerUuid;
       let legacy = document.querySelector('#drawer-legacy-name');
       if (!legacy) {
         legacy = document.createElement('p');
@@ -152,9 +186,8 @@ function applyResolvedNameLabels() {
         legacy.style.margin = '0 0 2px';
         drawerUuidElement.parentElement?.insertBefore(legacy, drawerUuidElement);
       }
-      const legacyText = resolved.legacyName ? `Legacy: ${resolved.legacyName}` : '';
-      if (legacy.textContent !== legacyText) legacy.textContent = legacyText;
-    } else if (/^Customer •••• /.test(drawerName.textContent || '') && drawerName.textContent !== drawerUuid) {
+      legacy.textContent = resolved.legacyName ? `Legacy: ${resolved.legacyName}` : '';
+    } else if (/^Customer •••• /.test(drawerName.textContent || '')) {
       drawerName.textContent = drawerUuid;
     }
   }
@@ -164,10 +197,11 @@ function applyResolvedNameLabels() {
     const nameElement = row.querySelector('.avatar-name');
     const uuid = uuidElement?.textContent?.trim();
     if (!uuid || !nameElement) continue;
+
     const resolved = lookupName(uuid);
     if (!resolved) continue;
-    const preferred = resolved.displayName || resolved.legacyName || uuid;
-    if (nameElement.textContent !== preferred) nameElement.textContent = preferred;
+    nameElement.textContent = resolved.displayName || resolved.legacyName || uuid;
+
     let legacy = row.querySelector('.avatar-legacy-name');
     if (!legacy) {
       legacy = document.createElement('p');
@@ -177,8 +211,7 @@ function applyResolvedNameLabels() {
       legacy.style.fontSize = '9px';
       nameElement.insertAdjacentElement('afterend', legacy);
     }
-    const legacyText = resolved.legacyName ? `Legacy: ${resolved.legacyName}` : '';
-    if (legacy.textContent !== legacyText) legacy.textContent = legacyText;
+    legacy.textContent = resolved.legacyName ? `Legacy: ${resolved.legacyName}` : '';
   }
 }
 
