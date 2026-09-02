@@ -99,19 +99,32 @@ if (config?.supabaseUrl && config?.supabaseAnonKey && config?.adminFunctionUrl &
       const payment = [String(request.payment_source || '').toUpperCase(), formatAmount(request.gross_amount, request.currency)]
         .filter(Boolean).join(' · ') || 'Manual review';
       const receipt = firstText(request.external_transaction_id, request.purchase_id);
+      const holdReason = request.metadata?.hold_reason || '';
+      const inactive = license && license.status !== 'active';
+      const reasonText = holdReason === 'license_not_active'
+        ? `Purchase held because license is ${license?.status || request.metadata?.license_status || 'not active'}. Reactivate it first.`
+        : request.requested_capacity > 25
+          ? 'Owner approval required above the normal 25-avatar limit.'
+          : 'Owner review required.';
 
       row.innerHTML = `
         <div><strong>${escapeHtml(name)}</strong><p class="muted">${escapeHtml(license ? `•••• ${license.key_last4 || '—'}` : 'License record unavailable')}</p></div>
-        <div><strong>${escapeHtml(change)}</strong><p class="muted">${escapeHtml(receipt ? `Receipt: ${shortReceipt(receipt)}` : 'No receipt recorded')}</p></div>
+        <div><strong>${escapeHtml(change)}</strong><p class="muted">${escapeHtml(reasonText)}</p><p class="muted">${escapeHtml(receipt ? `Receipt: ${shortReceipt(receipt)}` : 'No receipt recorded')}</p></div>
         <div><strong>${escapeHtml(payment)}</strong><p class="muted">${escapeHtml(shortDate(request.created_at))}</p></div>
-        <div><button class="mini-button" type="button">Approve</button></div>`;
+        <div><button class="mini-button" type="button">${inactive ? 'Reactivate First' : 'Approve'}</button></div>`;
 
-      row.querySelector('button').addEventListener('click', () => approve(request, license));
+      const button = row.querySelector('button');
+      if (inactive) {
+        button.disabled = true;
+        button.title = 'Reactivate the license in the customer record, then return here to approve the held capacity purchase.';
+      } else {
+        button.addEventListener('click', () => approve(request, license));
+      }
       list.append(row);
     }
 
     // The existing dashboard counts non-active licenses as needing attention. Pending
-    // paid capacity overrides are an additional owner action, so include them too.
+    // paid capacity reviews are an additional owner action, so include them too.
     const attention = document.querySelector('#metric-attention');
     if (attention) {
       const nonActive = licenses.filter((license) => license.status !== 'active').length;
@@ -122,7 +135,10 @@ if (config?.supabaseUrl && config?.supabaseAnonKey && config?.adminFunctionUrl &
   async function approve(request, license) {
     const name = customerName(license);
     const detail = `${name}: approve +${request.requested_slots} slots, taking capacity from ${request.current_capacity} to ${request.requested_capacity}?`;
-    if (!confirm(`${detail}\n\nThis is the owner-only override for capacity above 25 avatars.`)) return;
+    const extra = request.requested_capacity > 25
+      ? '\n\nThis records the owner-only override above the normal 25-avatar limit.'
+      : '';
+    if (!confirm(`${detail}${extra}`)) return;
 
     const note = prompt('Owner note (optional). Cancel to stop:', request.note || '');
     if (note === null) return;
@@ -142,7 +158,7 @@ if (config?.supabaseUrl && config?.supabaseAnonKey && config?.adminFunctionUrl &
       if (!response.ok) throw new Error(result.error || 'Override approval failed');
       await load();
     } catch (error) {
-      alert(`Could not approve the capacity override: ${humanize(error.message)}`);
+      alert(`Could not approve the capacity request: ${humanize(error.message)}`);
     }
   }
 
