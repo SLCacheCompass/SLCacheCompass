@@ -61,21 +61,44 @@ Deno.serve(async (req) => {
         .filter(validUuid)
         .slice(0, 250);
 
-      let query = db.from('license_capacity_events')
+      let eventQuery = db.from('license_capacity_events')
         .select('id,license_id,customer_id,event_type,delta_slots,previous_capacity,resulting_capacity,payment_source,gross_amount,fee_amount,net_amount,currency,external_transaction_id,purchase_id,owner_override,note,metadata,created_at')
         .order('created_at', { ascending: false })
         .limit(1000);
-      if (ids.length) query = query.in('license_id', ids);
+      let overrideQuery = db.from('license_capacity_override_requests')
+        .select('id,license_id,customer_id,requested_slots,current_capacity,requested_capacity,payment_source,gross_amount,fee_amount,net_amount,currency,external_transaction_id,purchase_id,status,note,metadata,created_at,resolved_at')
+        .order('created_at', { ascending: false })
+        .limit(500);
+      if (ids.length) {
+        eventQuery = eventQuery.in('license_id', ids);
+        overrideQuery = overrideQuery.in('license_id', ids);
+      }
 
-      const { data, error } = await query;
-      if (error) {
-        console.error('admin-entitlements list failed', error.code, error.message);
+      const [{ data: events, error: eventError }, { data: overrideRequests, error: overrideError }] = await Promise.all([eventQuery, overrideQuery]);
+      if (eventError || overrideError) {
+        console.error('admin-entitlements list failed', eventError?.code || overrideError?.code, eventError?.message || overrideError?.message);
         return json({ error: 'capacity_history_failed' }, 500);
       }
-      return json({ events: data || [] });
+      return json({ events: events || [], overrideRequests: overrideRequests || [] });
     }
 
     const body = await req.json();
+
+    if (body.action === 'approve_override') {
+      const requestId = Number(body.requestId);
+      if (!Number.isInteger(requestId) || requestId <= 0) return json({ error: 'invalid_override_request' }, 400);
+      const { data, error } = await db.rpc('cc_approve_capacity_override', {
+        override_request_id: requestId,
+        owner_note: text(body.note, 1000),
+        metadata_value: { admin_user_id: admin.id, admin_email: admin.email || null, source: 'back_office' },
+      });
+      if (error) {
+        console.error('admin-entitlements override approval failed', error.code, error.message);
+        return json({ error: 'override_approval_failed' }, 500);
+      }
+      return json({ updated: true, entitlement: data });
+    }
+
     if (body.action !== 'add_capacity') return json({ error: 'unsupported_action' }, 400);
 
     const slotsToAdd = Number(body.slotsToAdd);
@@ -100,8 +123,6 @@ Deno.serve(async (req) => {
       licenseId = entitlement || null;
     }
 
-    // Fallback for UUID-less legacy/test records: allow a precise tier + key ending
-    // lookup, but reject collisions rather than guessing.
     if (!licenseId && body.keyLast4) {
       const keyLast4 = String(body.keyLast4).trim().toUpperCase();
       const tier = Number(body.tier);
@@ -130,6 +151,32 @@ Deno.serve(async (req) => {
     if (!['upgrade', 'gift', 'comp', 'manual_adjustment', 'purchase_capacity'].includes(recordType)) {
       return json({ error: 'invalid_record_type' }, 400);
     }
+    const externalTransactionId = text(body.externalTransactionId, 200);
+
+    // If this is approval of a previously paid over-cap transaction, resolve that
+    // pending request rather than creating a second capacity event for the same receipt.
+    if (ownerOverride && externalTransactionId) {
+      const { data: pending, error: pendingError } = await db.from('license_capacity_override_requests')
+        .select('id,license_id,status')
+        .eq('external_transaction_id', externalTransactionId)
+        .eq('license_id', licenseId)
+        .eq('status', 'pending')
+        .limit(1)
+        .maybeSingle();
+      if (pendingError) return json({ error: 'override_lookup_failed' }, 500);
+      if (pending) {
+        const { data, error } = await db.rpc('cc_approve_capacity_override', {
+          override_request_id: pending.id,
+          owner_note: text(body.note, 1000),
+          metadata_value: { admin_user_id: admin.id, admin_email: admin.email || null, source: 'back_office' },
+        });
+        if (error) {
+          console.error('admin-entitlements pending override failed', error.code, error.message);
+          return json({ error: 'override_approval_failed' }, 500);
+        }
+        return json({ updated: true, entitlement: data, approvedPendingRequest: true });
+      }
+    }
 
     const { data, error } = await db.rpc('cc_upgrade_license_capacity', {
       target_license_id: licenseId,
@@ -140,7 +187,7 @@ Deno.serve(async (req) => {
       fee_amount_value: fee,
       net_amount_value: net,
       currency_value: text(body.currency, 12),
-      external_transaction_value: text(body.externalTransactionId, 200),
+      external_transaction_value: externalTransactionId,
       purchase_id_value: text(body.purchaseId, 200),
       owner_override_value: ownerOverride,
       note_value: text(body.note, 1000),
