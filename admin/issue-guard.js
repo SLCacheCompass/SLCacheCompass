@@ -6,6 +6,8 @@ if (form && config?.supabaseUrl && config?.supabaseAnonKey && config?.adminFunct
   const supabase = createClient(config.supabaseUrl, config.supabaseAnonKey);
   let licenses = [];
   let loadedAt = 0;
+  let loadOkay = false;
+  let checking = false;
 
   refresh();
   supabase.auth.onAuthStateChange((_event, session) => { if (session) refresh(); });
@@ -16,23 +18,28 @@ if (form && config?.supabaseUrl && config?.supabaseAnonKey && config?.adminFunct
   form.addEventListener('submit', guardIssue, true);
 
   async function refresh() {
+    loadedAt = Date.now();
+    loadOkay = false;
     try {
       const { data } = await supabase.auth.getSession();
-      if (!data.session) return;
+      if (!data.session) return false;
       const params = new URLSearchParams({ q: '', status: '', limit: '1000' });
       const response = await fetch(`${config.adminFunctionUrl}?${params}`, {
         headers: { authorization: `Bearer ${data.session.access_token}` },
       });
       const result = await response.json();
-      if (!response.ok) return;
+      if (!response.ok) return false;
       licenses = Array.isArray(result.licenses) ? result.licenses : [];
+      loadOkay = true;
       loadedAt = Date.now();
+      return true;
     } catch (error) {
       console.debug('Duplicate-license guard could not refresh.', error);
+      return false;
     }
   }
 
-  async function guardIssue(event) {
+  function guardIssue(event) {
     const data = new FormData(form);
     const paymentMethod = String(data.get('paymentMethod') || '').toLowerCase();
     if (paymentMethod === 'test') return;
@@ -40,7 +47,28 @@ if (form && config?.supabaseUrl && config?.supabaseAnonKey && config?.adminFunct
     const uuid = String(data.get('purchaserAvatarUuid') || '').trim().toLowerCase();
     if (!isUuid(uuid)) return;
 
-    if (Date.now() - loadedAt > 30000) await refresh();
+    // Never let the existing submit handler race an async duplicate check. Stop the
+    // submit first, refresh, then resubmit through this same guard once data is current.
+    if (!loadOkay || Date.now() - loadedAt > 30000) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      if (checking) return;
+      checking = true;
+      const message = document.querySelector('#app-message');
+      if (message) message.textContent = 'Checking for an existing customer entitlement…';
+      refresh().then((ok) => {
+        checking = false;
+        if (!ok) {
+          const text = 'Cache Compass could not verify whether this customer already has an entitlement. No license was created. Refresh the Back Office and try again.';
+          if (message) message.textContent = text;
+          alert(text);
+          return;
+        }
+        form.requestSubmit();
+      });
+      return;
+    }
+
     const existing = licenses.find((license) => licenseMatchesUuid(license, uuid));
     if (!existing) return;
 
