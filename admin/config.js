@@ -6,3 +6,8 @@ window.CACHE_COMPASS_ADMIN_CONFIG = {
   nameResolverFunctionUrl: 'https://glamoujtjfczrpkrpbmp.supabase.co/functions/v1/avatar-name-resolver',
   deleteLicenseFunctionUrl: 'https://glamoujtjfczrpkrpbmp.supabase.co/functions/v1/admin-delete-license',
 };
+
+const licenseDeleteModule = document.createElement('script');
+licenseDeleteModule.type = 'module';
+licenseDeleteModule.src = 'license-delete.js';
+document.head.append(licenseDeleteModule);
