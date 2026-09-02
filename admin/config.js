@@ -4,4 +4,5 @@ window.CACHE_COMPASS_ADMIN_CONFIG = {
   adminFunctionUrl: 'https://glamoujtjfczrpkrpbmp.supabase.co/functions/v1/admin-licenses',
   releaseFunctionUrl: 'https://glamoujtjfczrpkrpbmp.supabase.co/functions/v1/admin-release',
   nameResolverFunctionUrl: 'https://glamoujtjfczrpkrpbmp.supabase.co/functions/v1/avatar-name-resolver',
+  deleteLicenseFunctionUrl: 'https://glamoujtjfczrpkrpbmp.supabase.co/functions/v1/admin-delete-license',
 };
