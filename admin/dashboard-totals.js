@@ -54,3 +54,21 @@ async function loadCurrentTotals() {
     console.error('Unable to load current dashboard totals', error);
   }
 }
+
+function replaceFallbackCustomerLabels() {
+  for (const row of document.querySelectorAll('#customer-rows tr')) {
+    const name = row.querySelector('.name-cell strong');
+    const uuid = row.querySelector('.uuid-short')?.getAttribute('title')?.trim();
+    if (name && /^Customer •••• /.test(name.textContent || '') && uuid) name.textContent = uuid;
+  }
+
+  const drawerName = document.querySelector('#drawer-name');
+  const drawerUuid = document.querySelector('#drawer-uuid')?.textContent?.trim();
+  if (drawerName && /^Customer •••• /.test(drawerName.textContent || '') && drawerUuid && !drawerUuid.startsWith('No primary')) {
+    drawerName.textContent = drawerUuid;
+  }
+}
+
+replaceFallbackCustomerLabels();
+const fallbackObserver = new MutationObserver(replaceFallbackCustomerLabels);
+fallbackObserver.observe(document.body, { childList: true, subtree: true, characterData: true });
