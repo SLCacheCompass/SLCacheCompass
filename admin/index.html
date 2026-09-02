@@ -61,6 +61,12 @@
           <button class="metric" data-jump="support"><span>Unread support</span><strong id="metric-support">—</strong></button>
         </div>
 
+        <div style="margin:2px 0 7px"><p class="eyebrow">CURRENT TOTALS</p></div>
+        <div class="metric-grid" style="grid-template-columns:repeat(2,minmax(0,220px));margin-bottom:12px">
+          <div class="metric" style="cursor:default"><span>Active customer accounts</span><strong id="metric-active-customers">—</strong></div>
+          <div class="metric" style="cursor:default"><span>Attached alts</span><strong id="metric-attached-alts">—</strong></div>
+        </div>
+
         <div class="dashboard-grid">
           <section class="panel compact-panel">
             <div class="section-title"><div><p class="eyebrow">ACTIVITY</p><h3>Recent activity</h3></div><button class="text-button" data-jump="customers">View customers</button></div>
@@ -172,5 +178,6 @@
 
   <script src="config.js"></script>
   <script type="module" src="app.js"></script>
+  <script type="module" src="dashboard-totals.js"></script>
 </body>
 </html>
