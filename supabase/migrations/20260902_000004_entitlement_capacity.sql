@@ -39,7 +39,8 @@ alter table public.license_capacity_events enable row level security;
 revoke all on public.license_capacity_events from anon, authenticated;
 
 -- The original schema tied max_avatars directly to the purchase tier. Upgrades need the
--- purchase tier to remain historical while current capacity grows independently.
+-- purchase tier to remain historical while current capacity grows independently. Only
+-- capacity-related CHECK constraints are relaxed; status/tier/history constraints stay put.
 do $$
 declare
   r record;
@@ -188,7 +189,7 @@ begin
   if slots_to_add is null or slots_to_add <= 0 then raise exception 'positive_slots_required'; end if;
 
   -- Idempotency: a retry of the same paid transaction returns the prior result rather
-  -- than adding the capacity twice.
+  -- than adding capacity twice.
   if external_transaction_value is not null and btrim(external_transaction_value) <> '' then
     select * into existing_event
     from public.license_capacity_events
@@ -304,37 +305,9 @@ begin
 end;
 $$;
 
--- Make the original license_avatars trigger honor upgraded current capacity while
--- preserving its active-license safety check.
-create or replace function public.enforce_license_avatar_limit()
-returns trigger
-language plpgsql
-security definer
-set search_path = public
-as $$
-declare
-  allowed_slots integer;
-  current_status text;
-  used_slots integer;
-begin
-  select status into current_status
-  from public.licenses
-  where id = new.license_id
-  for update;
-
-  allowed_slots := public.cc_license_capacity(new.license_id);
-
-  if allowed_slots <= 0 then raise exception 'license_not_found'; end if;
-  if current_status <> 'active' then raise exception 'license_not_active'; end if;
-
-  select count(*) into used_slots
-  from public.license_avatars
-  where license_id = new.license_id;
-
-  if used_slots >= allowed_slots then raise exception 'avatar_limit_reached'; end if;
-  return new;
-end;
-$$;
+-- Do not replace or modify existing avatar registration/replacement triggers here.
+-- Updating the existing current-capacity columns is intentionally enough for the live
+-- licensing functions/triggers to continue enforcing their own safety/history behavior.
 
 revoke all on function public.cc_license_capacity(uuid) from public, anon, authenticated;
 revoke all on function public.cc_find_active_entitlement(uuid, uuid) from public, anon, authenticated;
