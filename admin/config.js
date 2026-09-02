@@ -8,9 +8,14 @@ window.CACHE_COMPASS_ADMIN_CONFIG = {
   entitlementFunctionUrl: 'https://glamoujtjfczrpkrpbmp.supabase.co/functions/v1/admin-entitlements',
 };
 
-for (const src of ['license-delete.js', 'operations.js']) {
-  const module = document.createElement('script');
-  module.type = 'module';
-  module.src = src;
-  document.head.append(module);
-}
+const licenseDeleteModule = document.createElement('script');
+licenseDeleteModule.type = 'module';
+licenseDeleteModule.src = 'license-delete.js';
+document.head.append(licenseDeleteModule);
+
+window.addEventListener('load', () => {
+  const operationsModule = document.createElement('script');
+  operationsModule.type = 'module';
+  operationsModule.src = 'operations.js';
+  document.head.append(operationsModule);
+}, { once: true });
