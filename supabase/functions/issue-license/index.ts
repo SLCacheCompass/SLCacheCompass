@@ -29,6 +29,9 @@ Deno.serve(async (req) => {
     const customerId = body.customerId && validAvatarUuid(body.customerId)
       ? String(body.customerId).trim().toLowerCase()
       : null;
+    const purchaserEmail = typeof body.purchaserEmail === 'string'
+      ? body.purchaserEmail.trim().toLowerCase().slice(0, 320)
+      : null;
     const externalTransactionId = body.externalTransactionId ? String(body.externalTransactionId).trim().slice(0, 200) : null;
     const paymentAmount = body.paymentAmount == null ? null : Number(body.paymentAmount);
     if (paymentAmount != null && (!Number.isFinite(paymentAmount) || paymentAmount < 0)) {
@@ -39,14 +42,15 @@ Deno.serve(async (req) => {
     const registerPurchaser = body.registerPurchaser !== false;
     const db = serviceClient();
 
-    // Tests remain intentionally separate. Normal purchases for a known existing
-    // customer add capacity to one active entitlement instead of creating unlimited
-    // parallel active licenses. The original tier remains historical; current capacity
-    // is updated and the purchase is recorded in license_capacity_events.
-    if (paymentMethod !== 'test' && (customerId || purchaserAvatarUuid)) {
-      const { data: existingLicenseId, error: findError } = await db.rpc('cc_find_active_entitlement', {
+    // Test licenses intentionally remain separate. Every normal known-customer purchase
+    // resolves the existing entitlement by customer id, email, primary avatar, or
+    // registered alt. That includes suspended/revoked entitlements so a purchase cannot
+    // bypass account state by creating a fresh active license.
+    if (paymentMethod !== 'test' && (customerId || purchaserAvatarUuid || purchaserEmail)) {
+      const { data: entitlementState, error: findError } = await db.rpc('cc_find_entitlement_state_v2', {
         target_customer_id: customerId,
         target_avatar_uuid: purchaserAvatarUuid ? String(purchaserAvatarUuid).trim().toLowerCase() : null,
+        target_email: purchaserEmail,
       });
 
       if (findError) {
@@ -54,7 +58,7 @@ Deno.serve(async (req) => {
         return json({ error: 'license_issue_failed' }, 500);
       }
 
-      if (existingLicenseId) {
+      if (entitlementState?.licenseId) {
         const feeAmount = body.feeAmount == null ? null : Number(body.feeAmount);
         const netAmount = body.netAmount == null ? null : Number(body.netAmount);
         if (feeAmount != null && !Number.isFinite(feeAmount)) return json({ error: 'invalid_fee_amount' }, 400);
@@ -63,10 +67,9 @@ Deno.serve(async (req) => {
         const recordType = ['upgrade', 'gift', 'comp', 'purchase_capacity', 'manual_adjustment'].includes(String(body.recordType || ''))
           ? String(body.recordType)
           : 'upgrade';
-        const ownerOverride = body.ownerOverride === true;
 
-        const { data: upgraded, error: upgradeError } = await db.rpc('cc_upgrade_license_capacity', {
-          target_license_id: existingLicenseId,
+        const { data: result, error: capacityError } = await db.rpc('cc_apply_capacity_purchase', {
+          target_license_id: entitlementState.licenseId,
           slots_to_add: maxAvatars,
           change_type: recordType,
           payment_source_value: paymentMethod,
@@ -76,27 +79,46 @@ Deno.serve(async (req) => {
           currency_value: paymentCurrency,
           external_transaction_value: externalTransactionId,
           purchase_id_value: body.purchaseId ? String(body.purchaseId).trim().slice(0, 200) : null,
-          owner_override_value: ownerOverride,
           note_value: body.note ? String(body.note).trim().slice(0, 1000) : null,
-          metadata_value: { source: 'issue-license' },
+          metadata_value: {
+            source: 'issue-license',
+            purchaser_avatar_uuid: purchaserAvatarUuid,
+            purchaser_email: purchaserEmail,
+          },
         });
 
-        if (upgradeError) {
-          const detail = `${upgradeError.message || ''} ${upgradeError.details || ''}`;
-          if (detail.includes('owner_override_required_above_25')) return json({ error: 'owner_override_required_above_25' }, 409);
+        if (capacityError) {
+          const detail = `${capacityError.message || ''} ${capacityError.details || ''}`;
           if (detail.includes('capacity_transaction_conflict')) return json({ error: 'duplicate_transaction_conflict' }, 409);
-          console.error('issue-license capacity upgrade failed', upgradeError.code, upgradeError.message);
+          console.error('issue-license capacity purchase failed', capacityError.code, capacityError.message);
           return json({ error: 'license_upgrade_failed' }, 500);
+        }
+
+        if (result?.pendingOwnerReview) {
+          return json({
+            upgraded: false,
+            createdNewLicense: false,
+            pendingOwnerReview: true,
+            pendingOwnerOverride: Boolean(result.pendingOwnerOverride),
+            holdReason: result.holdReason || null,
+            licenseId: entitlementState.licenseId,
+            licenseStatus: entitlementState.status || null,
+            addedSlots: maxAvatars,
+            previousCapacity: result.previousCapacity ?? entitlementState.capacity ?? null,
+            requestedCapacity: result.requestedCapacity ?? null,
+            transactionId: externalTransactionId,
+          }, 202);
         }
 
         return json({
           upgraded: true,
           createdNewLicense: false,
+          pendingOwnerReview: false,
           licenseKey: null,
-          licenseId: existingLicenseId,
+          licenseId: entitlementState.licenseId,
           addedSlots: maxAvatars,
-          maxAvatars: Number(upgraded?.capacity || 0),
-          status: 'active',
+          maxAvatars: Number(result?.capacity || 0),
+          status: entitlementState.status || 'active',
           transactionId: externalTransactionId,
         });
       }
