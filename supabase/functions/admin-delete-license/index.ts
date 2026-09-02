@@ -28,7 +28,16 @@ async function requireAdmin(req: Request, db: ReturnType<typeof dbClient>) {
   const token = auth.toLowerCase().startsWith('bearer ') ? auth.slice(7).trim() : '';
   if (!token) return false;
   const { data, error } = await db.auth.getUser(token);
-  return !error && Boolean(data.user);
+  if (error || !data.user) return false;
+
+  // A valid Supabase session is not sufficient for permanent record deletion.
+  const { data: admin, error: adminError } = await db
+    .from('admin_users')
+    .select('user_id,role,active')
+    .eq('user_id', data.user.id)
+    .maybeSingle();
+
+  return !adminError && admin?.active === true && ['owner', 'admin'].includes(admin.role);
 }
 
 Deno.serve(async (req) => {
