@@ -6,15 +6,18 @@
   <meta name="robots" content="noindex,nofollow">
   <title>Cache Compass Back Office</title>
   <link rel="stylesheet" href="styles.css">
-  <link rel="stylesheet" href="release.css">
 </head>
 <body>
   <header class="topbar">
-    <div>
+    <div class="brand-block">
       <p class="eyebrow">OWNER ACCESS</p>
-      <h1>Cache Compass Back Office</h1>
+      <h1>Cache Compass <span>Back Office</span></h1>
     </div>
-    <button id="sign-out" class="button quiet" hidden>Sign out</button>
+    <div class="top-actions">
+      <button id="global-search-button" class="icon-button" aria-label="Focus customer search" title="Search">⌕</button>
+      <button id="new-license-button" class="button gold" hidden>+ Issue License</button>
+      <button id="sign-out" class="button quiet" hidden>Sign out</button>
+    </div>
   </header>
 
   <main>
@@ -26,7 +29,7 @@
     <section id="login-panel" class="panel auth-panel">
       <p class="eyebrow">SECURE SIGN-IN</p>
       <h2>Send an owner sign-in link</h2>
-      <p>No back-office password is stored in this website. Supabase sends a one-time sign-in link to the approved owner email.</p>
+      <p>No back-office password is stored here. Supabase sends a one-time sign-in link to the approved owner email.</p>
       <form id="login-form">
         <label>Email <input id="login-email" type="email" autocomplete="email" required></label>
         <button class="button primary" type="submit">Send sign-in link</button>
@@ -35,76 +38,137 @@
     </section>
 
     <section id="app" hidden>
-      <div class="toolbar panel">
-        <div class="search-group">
-          <label>Find a customer, avatar, UUID, email, or license ending
-            <input id="search" type="search" placeholder="Avatar name, UUID, email, or last 4">
-          </label>
-          <label>Status
-            <select id="status-filter">
-              <option value="">All statuses</option>
-              <option value="active">Active</option>
-              <option value="suspended">Suspended</option>
-              <option value="revoked">Revoked</option>
-            </select>
-          </label>
-          <button id="search-button" class="button primary">Search</button>
-        </div>
-        <div class="toolbar-actions">
-          <button id="new-license-button" class="button gold">Issue license</button>
-          <button id="export-button" class="button quiet">Export CSV</button>
-        </div>
-      </div>
+      <nav class="tabs" aria-label="Back office sections">
+        <button class="tab active" data-view="dashboard">Dashboard</button>
+        <button class="tab" data-view="customers">Customers</button>
+        <button class="tab" data-view="licenses">Licenses</button>
+        <button class="tab" data-view="sales">Sales</button>
+        <button class="tab" data-view="releases">Releases</button>
+        <button class="tab" data-view="support">Support</button>
+      </nav>
 
-      <section id="issue-panel" class="panel" hidden>
-        <div class="section-title"><div><p class="eyebrow">MANUAL OR TEST SALE</p><h2>Issue a license</h2></div><button id="close-issue" class="icon-button" aria-label="Close">×</button></div>
-        <form id="issue-form" class="form-grid">
-          <label>Tier<select name="tier"><option value="3">3 avatars</option><option value="5">5 avatars</option><option value="10">10 avatars</option></select></label>
-          <label>Record type<select name="paymentMethod"><option value="manual">Manual sale</option><option value="test">Test license</option></select></label>
-          <label>Avatar UUID<input name="purchaserAvatarUuid" placeholder="Optional"></label>
-          <label>Avatar name<input name="purchaserAvatarName" placeholder="Optional"></label>
-          <label>Payment amount<input name="paymentAmount" type="number" min="0" step="0.01" placeholder="Optional"></label>
-          <label>Currency<input name="paymentCurrency" value="USD" maxlength="12"></label>
-          <label class="wide">External receipt / transaction ID<input name="externalTransactionId" placeholder="Optional but recommended"></label>
-          <button class="button gold" type="submit">Create license</button>
-        </form>
-        <div id="issued-license" class="issued" hidden></div>
+      <div class="app-status"><p id="app-message" class="message" role="status"></p></div>
+
+      <section id="view-dashboard" class="view active">
+        <div class="view-heading">
+          <div><p class="eyebrow">OVERVIEW</p><h2>Since your last login</h2><p id="since-label" class="muted"></p></div>
+        </div>
+        <div class="metric-grid">
+          <button class="metric" data-jump="customers"><span>New customers</span><strong id="metric-customers">0</strong></button>
+          <button class="metric" data-jump="licenses"><span>New licenses</span><strong id="metric-licenses">0</strong></button>
+          <button class="metric" data-jump="licenses"><span>Avatar registrations</span><strong id="metric-avatars">0</strong></button>
+          <button class="metric attention" data-jump="licenses"><span>Needs attention</span><strong id="metric-attention">0</strong></button>
+          <button class="metric" data-jump="support"><span>Unread support</span><strong id="metric-support">—</strong></button>
+        </div>
+
+        <div class="dashboard-grid">
+          <section class="panel compact-panel">
+            <div class="section-title"><div><p class="eyebrow">ACTIVITY</p><h3>Recent activity</h3></div><button class="text-button" data-jump="customers">View customers</button></div>
+            <div id="activity-list" class="activity-list"></div>
+          </section>
+          <section class="panel compact-panel quick-find-panel">
+            <p class="eyebrow">QUICK FIND</p>
+            <h3>Pull up a customer</h3>
+            <p class="muted">Search an avatar name, UUID, email, or license ending.</p>
+            <div class="quick-find"><input id="dashboard-search" type="search" placeholder="Name, UUID, email, license"><button id="dashboard-search-button" class="button primary">Find</button></div>
+          </section>
+        </div>
       </section>
 
-      <section class="panel release-panel">
-        <div><p class="eyebrow">CUSTOMER DOWNLOAD</p><h2>Publish a release</h2></div>
-        <p class="muted">The installer stays private. Publishing a new version makes it the active download and gives licensed customers a ten-minute signed link.</p>
-        <form id="release-form" class="release-form">
-          <label>Version<input name="version" required placeholder="1.0.0" pattern="[0-9]+\.[0-9]+\.[0-9]+([+-][0-9A-Za-z.-]+)?"></label>
-          <label class="release-file">Installer or ZIP<input name="file" type="file" accept=".exe,.msi,.zip" required></label>
-          <label class="wide">Release notes<textarea name="releaseNotes" rows="3" placeholder="What changed in this release"></textarea></label>
-          <button class="button gold" type="submit">Upload and publish</button>
-        </form>
-        <p id="release-message" class="message" role="status"></p>
+      <section id="view-customers" class="view">
+        <div class="view-heading split">
+          <div><p class="eyebrow">CUSTOMERS</p><h2>Customer directory</h2></div>
+          <div class="inline-actions"><button id="export-button" class="button quiet">Export CSV</button></div>
+        </div>
+        <div class="filterbar">
+          <input id="customer-search" type="search" placeholder="Search avatar name, UUID, email, or license ending">
+          <select id="customer-status-filter" aria-label="Customer status"><option value="">All statuses</option><option value="active">Active</option><option value="suspended">Suspended</option><option value="revoked">Revoked</option></select>
+          <button id="customer-search-button" class="button primary">Search</button>
+        </div>
+        <div class="table-shell">
+          <table class="data-table customer-table">
+            <thead><tr><th>Avatar</th><th>Primary UUID</th><th>Licenses</th><th>Slots</th><th>Source</th><th>Status</th><th>Last purchase</th></tr></thead>
+            <tbody id="customer-rows"></tbody>
+          </table>
+        </div>
+        <p id="customer-count" class="table-count"></p>
       </section>
 
-      <div class="summary-row">
-        <p id="result-count">0 licenses</p>
-        <p id="app-message" class="message" role="status"></p>
-      </div>
-      <section id="licenses" class="license-list" aria-live="polite"></section>
+      <section id="view-licenses" class="view">
+        <div class="view-heading"><div><p class="eyebrow">LICENSES</p><h2>All licenses</h2></div></div>
+        <div class="filterbar">
+          <input id="license-search" type="search" placeholder="Search customer, avatar, UUID, receipt, or license ending">
+          <select id="license-status-filter" aria-label="License status"><option value="">All statuses</option><option value="active">Active</option><option value="suspended">Suspended</option><option value="revoked">Revoked</option></select>
+          <button id="license-search-button" class="button primary">Search</button>
+        </div>
+        <div class="table-shell">
+          <table class="data-table"><thead><tr><th>Customer</th><th>License</th><th>Slots</th><th>Payment</th><th>Status</th><th>Created</th></tr></thead><tbody id="license-rows"></tbody></table>
+        </div>
+        <p id="license-count" class="table-count"></p>
+      </section>
+
+      <section id="view-sales" class="view">
+        <div class="view-heading"><div><p class="eyebrow">SALES</p><h2>Payment records</h2></div></div>
+        <div class="table-shell">
+          <table class="data-table"><thead><tr><th>Customer</th><th>Source</th><th>Amount</th><th>License</th><th>Receipt</th><th>Date</th></tr></thead><tbody id="sales-rows"></tbody></table>
+        </div>
+      </section>
+
+      <section id="view-releases" class="view">
+        <div class="view-heading"><div><p class="eyebrow">CUSTOMER DOWNLOAD</p><h2>Publish a release</h2><p class="muted">The installer stays private. Publishing makes it the active licensed download.</p></div></div>
+        <section class="panel release-panel">
+          <form id="release-form" class="release-form">
+            <label>Version<input name="version" required placeholder="1.0.0" pattern="[0-9]+\.[0-9]+\.[0-9]+([+-][0-9A-Za-z.-]+)?"></label>
+            <label class="release-file">Installer or ZIP<input name="file" type="file" accept=".exe,.msi,.zip" required></label>
+            <label class="wide">Release notes<textarea name="releaseNotes" rows="4" placeholder="What changed in this release"></textarea></label>
+            <button class="button gold" type="submit">Upload and publish</button>
+          </form>
+          <p id="release-message" class="message" role="status"></p>
+        </section>
+      </section>
+
+      <section id="view-support" class="view">
+        <div class="view-heading"><div><p class="eyebrow">SUPPORT</p><h2>Support inbox</h2></div></div>
+        <section class="panel empty-state">
+          <h3>Email connection is not configured yet</h3>
+          <p>The dashboard is ready for a support inbox, but email has not been connected to this website. No messages are being read or stored here yet.</p>
+        </section>
+      </section>
     </section>
   </main>
 
-  <template id="license-template">
-    <article class="license-card panel">
-      <div class="license-head">
-        <div><span class="status"></span><h2 class="license-label"></h2><p class="license-meta"></p></div>
-        <div class="license-actions"></div>
+  <aside id="customer-drawer" class="drawer" aria-hidden="true">
+    <div class="drawer-backdrop" data-close-drawer></div>
+    <section class="drawer-panel" role="dialog" aria-modal="true" aria-labelledby="drawer-name">
+      <div class="drawer-head">
+        <div><p class="eyebrow">CUSTOMER</p><h2 id="drawer-name">Customer</h2><p id="drawer-uuid" class="uuid-line"></p></div>
+        <button class="icon-button close-button" data-close-drawer aria-label="Close">×</button>
       </div>
-      <div class="facts"></div>
-      <div class="columns">
-        <section><h3>Current avatars</h3><div class="avatars"></div></section>
-        <section><h3>Customer & payment</h3><div class="orders"></div></section>
-      </div>
-      <details><summary>Avatar history and audit trail</summary><div class="history"></div></details>
-    </article>
-  </template>
+      <div class="customer-summary" id="customer-summary"></div>
+      <div class="drawer-actions"><button id="drawer-add-license" class="button gold">+ Add License</button></div>
+      <section class="drawer-section"><div class="section-title"><h3>Licenses</h3></div><div id="drawer-licenses"></div></section>
+      <section class="drawer-section"><div class="section-title"><h3>Customer notes</h3></div><form id="note-form" class="note-form"><select name="category"><option>General</option><option>Support</option><option>Billing</option><option>License Change</option></select><textarea name="text" rows="3" placeholder="Add a note about this customer…" required></textarea><button class="button quiet" type="submit">Add note</button></form><p class="storage-note">Notes are stored in this browser until database-backed notes are deployed.</p><div id="drawer-notes" class="notes-list"></div></section>
+      <section class="drawer-section"><div class="section-title"><h3>History</h3></div><div id="drawer-history" class="history-list"></div></section>
+    </section>
+  </aside>
+
+  <div id="issue-modal" class="modal" hidden>
+    <div class="modal-backdrop" data-close-modal></div>
+    <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="issue-title">
+      <div class="section-title"><div><p class="eyebrow">LICENSE</p><h2 id="issue-title">Issue a license</h2><p id="issue-context" class="muted"></p></div><button class="icon-button" data-close-modal aria-label="Close">×</button></div>
+      <form id="issue-form" class="form-grid">
+        <label>Tier<select name="tier"><option value="3">3 avatars</option><option value="5">5 avatars</option><option value="10">10 avatars</option></select></label>
+        <label>Record type<select name="paymentMethod"><option value="manual">Manual sale</option><option value="test">Test license</option></select></label>
+        <label>Avatar name<input name="purchaserAvatarName" placeholder="Optional"></label>
+        <label>Avatar UUID<input name="purchaserAvatarUuid" placeholder="Optional"></label>
+        <label>Payment amount<input name="paymentAmount" type="number" min="0" step="0.01" placeholder="Optional"></label>
+        <label>Currency<input name="paymentCurrency" value="USD" maxlength="12"></label>
+        <label class="wide">Receipt / transaction ID<input name="externalTransactionId" placeholder="Optional but recommended"></label>
+        <button class="button gold" type="submit">Create license</button>
+      </form>
+      <div id="issued-license" class="issued" hidden></div>
+    </section>
+  </div>
 
   <script src="config.js"></script>
   <script type="module" src="app.js"></script>
