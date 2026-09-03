@@ -10,6 +10,7 @@ integer PRICE_5 = 0;
 integer PRICE_10 = 0;
 integer READY = FALSE;
 integer MAX_RETRIES = 3;
+integer NORMAL_MAX_AVATARS = 30;
 
 key CONFIG_REQUEST = NULL_KEY;
 
@@ -124,7 +125,7 @@ beginPurchase(key payer, integer amount)
     key requestId = sendPurchase(payer, nonce, tier, amount, payerName);
 
     PENDING += [requestId, payer, nonce, tier, amount, payerName, 0];
-    llInstantMessage(payer, "Cache Compass received your L$ payment. Creating your " + (string)tier + "-avatar license now...");
+    llInstantMessage(payer, "Cache Compass received your L$ payment. Processing your " + (string)tier + "-avatar purchase now...");
 }
 
 retryPurchase(integer index)
@@ -145,21 +146,16 @@ default
 {
     state_entry()
     {
-        // llSetPayPrice must be called from the root prim.
         if (llGetLinkNumber() > 1)
         {
             hidePayments("SCRIPT MUST BE IN ROOT PRIM");
             llOwnerSay("Move CacheCompassVendor.lsl into the root prim of the vendor object.");
             return;
         }
-
         loadConfig();
     }
 
-    on_rez(integer startParam)
-    {
-        llResetScript();
-    }
+    on_rez(integer startParam) { llResetScript(); }
 
     changed(integer change)
     {
@@ -173,36 +169,29 @@ default
         {
             string statusText = "NOT READY";
             if (READY) statusText = "READY";
-
-            llOwnerSay(
-                "Cache Compass vendor status: " + statusText +
-                " | Owner UUID: " + (string)llGetOwner() +
-                " | Object UUID: " + (string)llGetKey()
-            );
+            llOwnerSay("Cache Compass vendor status: " + statusText + " | Owner UUID: " + (string)llGetOwner() + " | Object UUID: " + (string)llGetKey());
             if (!READY) loadConfig();
         }
         else if (READY)
         {
             llInstantMessage(
                 toucher,
-                "Cache Compass license prices: 3 avatars L$" + (string)PRICE_3 +
+                "Cache Compass prices: 3 avatars L$" + (string)PRICE_3 +
                 ", 5 avatars L$" + (string)PRICE_5 +
                 ", 10 avatars L$" + (string)PRICE_10 +
-                ". Right-click this kiosk and choose Pay."
+                ". Existing customers can add capacity up to " + (string)NORMAL_MAX_AVATARS + " total avatars. Right-click this kiosk and choose Pay."
             );
         }
     }
 
     money(key payer, integer amount)
     {
-        // Never trust the pay buttons alone. Verify the actual money-event amount.
         if (!READY)
         {
             llInstantMessage(payer, "Cache Compass is temporarily unavailable. Your payment was received; please contact support and do not pay again.");
             llOwnerSay("WARNING: payment arrived while vendor was not ready. Payer " + (string)payer + ", amount L$" + (string)amount + ".");
             return;
         }
-
         beginPurchase(payer, amount);
     }
 
@@ -221,6 +210,8 @@ default
             PRICE_3 = (integer)llJsonGetValue(body, ["tiers", 0, "price"]);
             PRICE_5 = (integer)llJsonGetValue(body, ["tiers", 1, "price"]);
             PRICE_10 = (integer)llJsonGetValue(body, ["tiers", 2, "price"]);
+            string maxText = llJsonGetValue(body, ["normalMaxAvatars"]);
+            if (maxText != JSON_INVALID && (integer)maxText > 0) NORMAL_MAX_AVATARS = (integer)maxText;
 
             if (PRICE_3 <= 0 || PRICE_5 <= 0 || PRICE_10 <= 0)
             {
@@ -242,29 +233,60 @@ default
         integer tier = llList2Integer(PENDING, index + 3);
         integer retries = llList2Integer(PENDING, index + 6);
 
-        if (status == 200 || status == 201)
+        if (status == 200 || status == 201 || status == 202)
         {
             string purchased = llJsonGetValue(body, ["purchased"]);
-            string licenseKey = llJsonGetValue(body, ["licenseKey"]);
-            string remaining = llJsonGetValue(body, ["remainingSlots"]);
-
-            if (purchased == JSON_TRUE && licenseKey != JSON_INVALID && licenseKey != "")
+            if (purchased == JSON_TRUE)
             {
-                llInstantMessage(
-                    payer,
-                    "Cache Compass purchase complete.\n" +
-                    "License: " + licenseKey + "\n" +
-                    "Tier: " + (string)tier + " avatars\n" +
-                    "Your purchasing avatar is registered automatically. Remaining slots: " + remaining + ".\n" +
-                    "Keep this license key private. Download/support: https://slcachecompass.com/"
-                );
-                PENDING = llDeleteSubList(PENDING, index, index + PENDING_STRIDE - 1);
-                return;
+                string pendingReview = llJsonGetValue(body, ["pendingOwnerReview"]);
+                string capacityAdded = llJsonGetValue(body, ["capacityAdded"]);
+                string totalCapacity = llJsonGetValue(body, ["maxAvatars"]);
+                string requestedCapacity = llJsonGetValue(body, ["requestedCapacity"]);
+                string remaining = llJsonGetValue(body, ["remainingSlots"]);
+                string licenseKey = llJsonGetValue(body, ["licenseKey"]);
+
+                if (pendingReview == JSON_TRUE)
+                {
+                    llInstantMessage(
+                        payer,
+                        "Cache Compass received your payment, but this purchase would place the account above the normal " +
+                        (string)NORMAL_MAX_AVATARS + "-avatar limit. It has been held for owner review. DO NOT PAY AGAIN. " +
+                        "Current capacity: " + totalCapacity + ". Requested capacity: " + requestedCapacity + ". " +
+                        "If you need help, contact support@slcachecompass.com and include receipt code " + (string)nonce + "."
+                    );
+                    llOwnerSay("CACHE COMPASS OWNER REVIEW REQUIRED: payer " + (string)payer + ", requested capacity " + requestedCapacity + ", receipt " + (string)nonce + ".");
+                    PENDING = llDeleteSubList(PENDING, index, index + PENDING_STRIDE - 1);
+                    return;
+                }
+
+                if (capacityAdded == JSON_TRUE)
+                {
+                    llInstantMessage(
+                        payer,
+                        "Cache Compass capacity added successfully. Your account now supports " + totalCapacity +
+                        " avatars. Remaining open slots: " + remaining + ". No new license key is required."
+                    );
+                    PENDING = llDeleteSubList(PENDING, index, index + PENDING_STRIDE - 1);
+                    return;
+                }
+
+                if (licenseKey != JSON_INVALID && licenseKey != "")
+                {
+                    llInstantMessage(
+                        payer,
+                        "Cache Compass purchase complete.\n" +
+                        "License: " + licenseKey + "\n" +
+                        "Tier: " + (string)tier + " avatars\n" +
+                        "Your purchasing avatar is registered automatically. Remaining slots: " + remaining + ".\n" +
+                        "Keep this license key private. Download/support: https://slcachecompass.com/"
+                    );
+                    PENDING = llDeleteSubList(PENDING, index, index + PENDING_STRIDE - 1);
+                    return;
+                }
             }
         }
 
-        // A retry uses the SAME nonce. The server derives the same license key from
-        // that nonce, so a lost HTTP response cannot accidentally create a second sale.
+        // Retry with the SAME nonce so a lost HTTP response cannot create a duplicate purchase or add capacity twice.
         if ((status == 0 || status == 408 || status == 429 || status >= 500) && retries < MAX_RETRIES)
         {
             retryPurchase(index);
@@ -273,15 +295,13 @@ default
 
         llInstantMessage(
             payer,
-            "Your Cache Compass payment was received, but automatic license delivery did not finish. " +
-            "DO NOT PAY AGAIN. Contact support@slcachecompass.com and include receipt code " + (string)nonce + "."
+            "Your Cache Compass payment was received, but automatic processing did not finish. DO NOT PAY AGAIN. " +
+            "Contact support@slcachecompass.com and include receipt code " + (string)nonce + "."
         );
         llOwnerSay(
             "CACHE COMPASS PURCHASE NEEDS ATTENTION: payer " + (string)payer +
-            ", tier " + (string)tier +
-            ", receipt " + (string)nonce +
-            ", HTTP " + (string)status +
-            ", response: " + body
+            ", tier " + (string)tier + ", receipt " + (string)nonce +
+            ", HTTP " + (string)status + ", response: " + body
         );
         PENDING = llDeleteSubList(PENDING, index, index + PENDING_STRIDE - 1);
     }
