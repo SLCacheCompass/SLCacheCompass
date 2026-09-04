@@ -103,8 +103,8 @@ if (config?.supabaseUrl && config?.supabaseAnonKey && config?.adminFunctionUrl &
       const inactive = license && license.status !== 'active';
       const reasonText = holdReason === 'license_not_active'
         ? `Purchase held because license is ${license?.status || request.metadata?.license_status || 'not active'}. Reactivate it first.`
-        : request.requested_capacity > 25
-          ? 'Owner approval required above the normal 25-avatar limit.'
+        : request.requested_capacity > 30
+          ? 'Owner approval required above the normal 30-avatar limit.'
           : 'Owner review required.';
 
       row.innerHTML = `
@@ -123,8 +123,6 @@ if (config?.supabaseUrl && config?.supabaseAnonKey && config?.adminFunctionUrl &
       list.append(row);
     }
 
-    // The existing dashboard counts non-active licenses as needing attention. Pending
-    // paid capacity reviews are an additional owner action, so include them too.
     const attention = document.querySelector('#metric-attention');
     if (attention) {
       const nonActive = licenses.filter((license) => license.status !== 'active').length;
@@ -135,8 +133,8 @@ if (config?.supabaseUrl && config?.supabaseAnonKey && config?.adminFunctionUrl &
   async function approve(request, license) {
     const name = customerName(license);
     const detail = `${name}: approve +${request.requested_slots} slots, taking capacity from ${request.current_capacity} to ${request.requested_capacity}?`;
-    const extra = request.requested_capacity > 25
-      ? '\n\nThis records the owner-only override above the normal 25-avatar limit.'
+    const extra = request.requested_capacity > 30
+      ? '\n\nThis records the owner-only override above the normal 30-avatar limit.'
       : '';
     if (!confirm(`${detail}${extra}`)) return;
 
