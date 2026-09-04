@@ -12,4 +12,13 @@ export function randomToken(): string { return hex(crypto.getRandomValues(new Ui
 export async function derive(secret: string, purpose: string, id: string): Promise<string> { if (secret.length < 32) throw new CommerceError('server_configuration_error', 503); const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']); return hex(new Uint8Array(await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(`cachecompass:v1:${purpose}:${id}`)))); }
 export async function credential(secret: string, orderId: string): Promise<string> { return `CC-${(await derive(secret, 'license', uuid(orderId))).toUpperCase()}`; }
 export function safeMessage(error: unknown): { error: string; status: number } { if (error instanceof CommerceError) return { error: error.code, status: error.status }; return { error: 'commerce_unavailable', status: 503 }; }
-export function stripeConfiguration(get: (name: string) => string | undefined) { const mode = get('STRIPE_MODE'); const secret = get('STRIPE_SECRET_KEY') || ''; if ((mode !== 'test' && mode !== 'live') || !secret.startsWith(`sk_${mode}_`) && !secret.startsWith(`rk_${mode}_`)) throw new CommerceError('commerce_not_configured', 503); return { mode: mode as Mode, secret }; }
+export function stripeConfiguration(get: (name: string) => string | undefined) { const mode = get('STRIPE_MODE'); const secret = get('STRIPE_SECRET_KEY') || ''; if ((mode !== 'test' && mode !== 'live') || (!secret.startsWith(`sk_${mode}_`) && !secret.startsWith(`rk_${mode}_`))) throw new CommerceError('commerce_not_configured', 503); return { mode: mode as Mode, secret }; }
+export function checkRelease(get: (name: string) => string | undefined) {
+  if (get('COMMERCE_RELEASE_READY') !== 'true') throw new CommerceError('download_not_ready', 503);
+  const url = get('COMMERCE_INSTALLER_URL') || '';
+  const hash = get('COMMERCE_INSTALLER_SHA256') || '';
+  let parsed: URL;
+  try { parsed = new URL(url); } catch { throw new CommerceError('download_not_ready', 503); }
+  if (parsed.protocol !== 'https:' || parsed.username || parsed.password || parsed.search || parsed.hash || parsed.pathname.split('/').pop() !== 'CacheCompass-Setup.exe' || !/^[a-f0-9]{64}$/i.test(hash)) throw new CommerceError('download_not_ready', 503);
+  return { downloadUrl: parsed.toString(), sha256: hash.toLowerCase(), version: get('COMMERCE_INSTALLER_VERSION') || '' };
+}
