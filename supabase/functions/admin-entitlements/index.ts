@@ -153,8 +153,6 @@ Deno.serve(async (req) => {
     }
     const externalTransactionId = text(body.externalTransactionId, 200);
 
-    // If this is approval of a previously paid over-cap transaction, resolve that
-    // pending request rather than creating a second capacity event for the same receipt.
     if (ownerOverride && externalTransactionId) {
       const { data: pending, error: pendingError } = await db.from('license_capacity_override_requests')
         .select('id,license_id,status')
@@ -200,7 +198,7 @@ Deno.serve(async (req) => {
 
     if (error) {
       const message = `${error.message || ''} ${error.details || ''}`;
-      if (message.includes('owner_override_required_above_25')) return json({ error: 'owner_override_required_above_25' }, 409);
+      if (message.includes('owner_override_required_above_30')) return json({ error: 'owner_override_required_above_30' }, 409);
       if (message.includes('license_not_active')) return json({ error: 'license_not_active' }, 409);
       if (message.includes('capacity_transaction_conflict')) return json({ error: 'capacity_transaction_conflict' }, 409);
       console.error('admin-entitlements upgrade failed', error.code, error.message);
