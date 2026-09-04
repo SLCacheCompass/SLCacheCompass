@@ -164,7 +164,7 @@ if (!config?.supabaseUrl || !config?.supabaseAnonKey || !config?.adminFunctionUr
           <label>Fees<input name="feeAmount" type="number" min="0" step="0.01" placeholder="Optional"></label>
           <label>Net<input name="netAmount" type="number" step="0.01" placeholder="Optional; calculated if gross + fees are given"></label>
           <label>Receipt / transaction<input name="externalTransactionId" maxlength="200" placeholder="Recommended for paid changes"></label>
-          <label class="wide"><input name="ownerOverride" type="checkbox" style="width:auto;margin-right:7px"> Owner override — allow total capacity above 25</label>
+          <label class="wide"><input name="ownerOverride" type="checkbox" style="width:auto;margin-right:7px"> Owner override — allow total capacity above 30</label>
           <label class="wide">Note<textarea name="note" rows="3" placeholder="Reason, support context, or payment note"></textarea></label>
           <button class="button gold" type="submit">Apply Capacity</button>
         </form>
@@ -220,8 +220,8 @@ if (!config?.supabaseUrl || !config?.supabaseAnonKey || !config?.adminFunctionUr
     let text = modalEntitlement
       ? `${customerName}: ${current} current slots + ${add || 0} = ${result} total.`
       : `${customerName}: no active entitlement selected.`;
-    if (result > 25 && !override) text += ' Totals above 25 require the owner override checkbox.';
-    if (result > 25 && override) text += ' Owner override will be recorded in the audit trail.';
+    if (result > 30 && !override) text += ' Totals above 30 require the owner override checkbox.';
+    if (result > 30 && override) text += ' Owner override will be recorded in the audit trail.';
     modal.querySelector('#capacity-context').textContent = text;
   }
 
@@ -236,8 +236,8 @@ if (!config?.supabaseUrl || !config?.supabaseAnonKey || !config?.adminFunctionUr
     const current = licenseCapacity(modalEntitlement);
     const resultCapacity = current + slotsToAdd;
     const ownerOverride = form.get('ownerOverride') === 'on';
-    if (resultCapacity > 25 && !ownerOverride) {
-      message.textContent = 'Capacity above 25 requires the owner override checkbox.';
+    if (resultCapacity > 30 && !ownerOverride) {
+      message.textContent = 'Capacity above 30 requires the owner override checkbox.';
       return;
     }
 
@@ -666,7 +666,7 @@ if (!config?.supabaseUrl || !config?.supabaseAnonKey || !config?.adminFunctionUr
 
   function humanError(value) {
     return ({
-      owner_override_required_above_25: 'Totals above 25 avatars require the owner override checkbox.',
+      owner_override_required_above_30: 'Totals above 30 avatars require the owner override checkbox.',
       license_not_active: 'This license is not active. Reactivate it before adding capacity.',
       active_entitlement_not_found: 'No active entitlement was found for this customer.',
       capacity_transaction_conflict: 'That receipt / transaction is already tied to a different capacity change.',
