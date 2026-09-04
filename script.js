@@ -88,3 +88,30 @@ if (pricingSection && !document.querySelector('#avatar-cap-note')) {
     pricingSection.appendChild(capNote);
   }
 }
+
+// Keep the website's short refund language aligned with the published policy.
+if (pricingSection) {
+  const refundNote = Array.from(pricingSection.querySelectorAll('.pricing-note'))
+    .find(note => note.textContent.includes('All sales are final. No refunds.'));
+  if (refundNote) {
+    refundNote.innerHTML = '<strong>Digital software purchases are generally final after delivery or activation.</strong> Duplicate charges, failed provisioning, unresolved verified Cache Compass technical failures, purchasing-system errors, and any refunds required by law are handled under our <a href="/refund-policy.html">Refund Policy</a>.';
+  }
+}
+
+// Surface the legal package from the site footer without changing the existing layout structure.
+const footerLinks = document.querySelector('.footer-links');
+if (footerLinks) {
+  const legalLinks = [
+    ['Terms & License', '/terms.html'],
+    ['Privacy Policy', '/privacy-policy.html'],
+    ['Refund Policy', '/refund-policy.html']
+  ];
+  legalLinks.forEach(([label, href]) => {
+    if (!footerLinks.querySelector(`a[href="${href}"]`)) {
+      const link = document.createElement('a');
+      link.href = href;
+      link.textContent = label;
+      footerLinks.appendChild(link);
+    }
+  });
+}
