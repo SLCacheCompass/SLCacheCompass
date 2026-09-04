@@ -23,6 +23,7 @@ Launch-critical audit only. No new product features. No purchases, license delet
   - 3-slot capacity purchase correctly increased a 3-slot entitlement to 6 inside the transaction;
   - repeated +10 additions correctly reached 30;
   - an additional +3 at 30 returned `pendingOwnerReview=true`, requested 33, and left active capacity at 30;
+  - explicit owner-override QA reached 33 inside a rollback transaction, proving the >30 manual override path;
   - all QA changes were rolled back; no capacity event or override test record was retained.
 
 ### Production security hardening
@@ -36,10 +37,28 @@ Launch-critical audit only. No new product features. No purchases, license delet
 - Protected Folders native fixture testing at 125% DPI passed the documented Select All / Deselect All / filter / Clear Search behavior.
 - `admin-delete-license` and `avatar-name-resolver` were already deployed and their unauthenticated access safeguards had been verified.
 
-### Legal
+### Legal / production installer preparation
 - Current Terms, Privacy Policy, and Refund Policy exist in the public website repository.
 - Terms effective date is September 4, 2026 and includes the final 30-avatar capacity language, anti-circumvention/piracy language, compatibility limits, inventory responsibility, refund-policy incorporation, Kentucky governing-law language, and affirmative-acceptance language.
-- Because launch is now in-world L$ vendor only, a web-checkout acceptance control is not a launch dependency. Installer/EULA acceptance remains the important affirmative software-license acceptance point.
+- Because launch is now in-world L$ vendor only, a web-checkout acceptance control is not a launch dependency. Installer/EULA acceptance is the important affirmative software-license acceptance point.
+- The latest owner source was recovered from the Cache Compass file library and audited. The existing installer already contains a gated acceptance checkbox, but it is still the private-beta installer and private-beta license.
+- Prepared a separate production installer source in the owner working copy with:
+  - production Cache Compass wording instead of Private Beta wording;
+  - an affirmative checkbox for the Cache Compass Terms of Service & Software License Agreement;
+  - September 4, 2026 production software-license text and links to the full Terms/Privacy/Refund policies;
+  - in-world L$ receipt wording instead of USD-or-L$ activation wording;
+  - production install/uninstall names;
+  - a new `build-production-release.ps1` that refuses to build if a tester entitlement is embedded, runs regression tests first, builds/obfuscates the app, embeds the installer payload, and emits a SHA-256 checksum.
+- The production release candidate has NOT been compiled here because this runtime does not have the .NET SDK. Native Windows build and rendering verification remain required before publication.
+
+### Website launch consistency
+- Updated `main/index.html` to match the approved **in-world vendor only** launch:
+  - removed all USD launch/regular pricing from the homepage;
+  - displays L$7,500 / L$10,500 / L$19,500 launch prices and L$9,000 / L$12,000 / L$21,000 regular prices;
+  - replaced “Prefer Linden Dollars?” / USD-comparison language with official in-world vendor language;
+  - aligned final-sale language with the Refund Policy’s applicable-law exception;
+  - added Terms, Privacy Policy, and Refund Policy links to the footer.
+- Kept `Coming Soon` in the main navigation intentionally. It should change only when the product is actually ready to sell/download.
 
 ### Marketing preparation
 - Added `launch/launch-kit-2026-09-04.md` containing:
@@ -52,6 +71,7 @@ Launch-critical audit only. No new product features. No purchases, license delet
   - commercial structure for a 60-second Beetle Wilder master;
   - launch social copy;
   - support templates.
+- Added `launch/in-world-vendor-legal-copy.md` with ready-to-use vendor sign/object/touch copy and the pre-purchase Terms/Refund/system-requirement notice.
 
 ## Confirmed current launch pricing
 - 3 avatars: L$7,500 launch / L$9,000 regular
@@ -59,13 +79,10 @@ Launch-critical audit only. No new product features. No purchases, license delet
 - 10 avatars: L$19,500 launch / L$21,000 regular
 - Launch price window: one month after the commercial releases.
 
-## Known website consistency issue
-The current `main` homepage still presents USD prices and copy implying an alternative USD purchase path, while the approved launch decision is **in-world vendor only**. It also still labels the main navigation CTA `Coming Soon`, which should remain until the actual release is ready but must be changed at launch. Do not publish a USD checkout.
-
 ## Remaining gates that require external/native interaction
 1. **In-world vendor wiring:** the in-world vendor must point to the new production `linden-purchase` endpoint rather than the legacy purchase endpoint, while keeping the existing private kiosk secret private. Then reset the script and confirm it loads L$7,500 / L$10,500 / L$19,500 from the server.
 2. **Actual in-world purchase verification:** one authorized test purchase/controlled payment is needed to prove the full LSL → Edge Function → purchase record → entitlement path. Do not run an unapproved real-money/L$ transaction automatically.
-3. **Windows native verification:** Remote Desktop Commander was not connected during this audit. Final installer pane rendering, licensed end-to-end Start Here/Scan/Review/Move flow, taskbar/maximize behavior, and tester-specific Windows issues require a connected Windows machine/tester.
+3. **Windows native build / verification:** Remote Desktop Commander was not connected during this audit and this runtime has no .NET SDK. Build the prepared production installer on the authorized Windows machine, visually verify the agreement pane at normal and scaled DPI, and exercise licensed Start Here → Scan → Review → Move, taskbar/maximize/restore, and install/update/uninstall.
 4. **Tester-specific proof:** Rei’s historical Landmark/Notecard issue and Beetle’s DPI/theme checkbox visibility require their machine/build feedback or equivalent native reproduction. Automated evidence is strong but is not a substitute for those tester conditions.
 5. **Beetle commercial:** waiting for Beetle’s reply on the 60-second package / social cut.
 6. **Primfeed account creation:** must be created by the account owner as the Cache Compass avatar; all copy/content is prepared.
@@ -75,3 +92,4 @@ The current `main` homepage still presents USD prices and copy implying an alter
 - USD/Stripe public checkout: not planned for this launch.
 - New feature requests: frozen until after launch.
 - Destructive owner Delete Record test: intentionally not performed.
+- Security-advisor cleanup that is not tied to a proven launch exploit is deferred until after release stabilization rather than risking a last-minute Back Office regression.
