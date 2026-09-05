@@ -14,7 +14,7 @@ licenseDeleteModule.src = 'license-delete.js';
 document.head.append(licenseDeleteModule);
 
 window.addEventListener('load', () => {
-  for (const src of ['operations.js', 'capacity-approvals.js', 'issue-guard.js', 'release-upload.js']) {
+  for (const src of ['operations.js', 'capacity-approvals.js', 'issue-guard.js', 'release-upload.js?v=20260905-2']) {
     const module = document.createElement('script');
     module.type = 'module';
     module.src = src;
