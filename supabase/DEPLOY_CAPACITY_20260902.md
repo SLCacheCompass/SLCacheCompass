@@ -28,8 +28,8 @@ For every normal paid purchase from a known customer (USD or L$):
    - A registered alt therefore resolves back to the same entitlement.
 3. If no existing entitlement exists, follow the current new-customer issuance path.
 4. If an existing entitlement is `active`, call `cc_apply_capacity_purchase(...)` instead of creating another active license.
-5. If the resulting capacity is 25 or less, capacity is applied idempotently to the existing entitlement.
-6. If the resulting capacity is above 25, the transaction is preserved as a pending owner-review request. Do not create another active license.
+5. If the resulting capacity is 30 or less, capacity is applied idempotently to the existing entitlement.
+6. If the resulting capacity is above 30, the transaction is preserved as a pending owner-review request. Do not create another active license.
 7. If the existing entitlement is `suspended` or `revoked`, preserve the transaction as a pending owner-review hold. Do not create another active license and do not reactivate automatically.
 8. Replays/retries must pass the same external transaction id so the capacity operation remains idempotent.
 
@@ -40,8 +40,8 @@ For Linden purchases, keep the existing nonce/recovery/reconciliation behavior. 
 The Back Office on `main` is already wired for:
 
 - `Upgrade / Add Alt Capacity`
-- normal 25-avatar ceiling
-- explicit owner override above 25
+- normal 30-avatar ceiling
+- explicit owner override above 30
 - gross / fees / net / currency / receipt metadata
 - upgrades / gifts / comps / manual adjustments
 - date range / USD-L$ / tier / sale-type filters
@@ -61,8 +61,8 @@ Use test data only. Do not alter historical production records just to make the 
 - Same primary avatar buys 5 -> no second active entitlement; existing entitlement gains 5 slots and both transactions remain visible.
 - A registered alt buys 3 -> resolves to the same entitlement; no new active license.
 - Repeat the same transaction/nonce -> no duplicate capacity and no duplicate active license.
-- Capacity 23 + purchase 3 -> transaction is preserved pending owner approval; capacity stays 23 until approved.
-- Owner approves -> capacity becomes 26 and the override is recorded.
+- Capacity 28 + purchase 3 -> transaction is preserved pending owner approval; capacity stays 28 until approved.
+- Owner approves -> capacity becomes 31 and the override is recorded.
 - Suspended customer purchases -> transaction is preserved pending review; no new active license and no automatic reactivation.
 - Reactivate suspended entitlement, then approve held request -> capacity applies to that entitlement.
 - Search still finds customer by avatar name, UUID, email, license ending, receipt, and transaction.
