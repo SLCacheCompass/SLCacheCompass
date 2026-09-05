@@ -60,8 +60,13 @@ if (config?.supabaseUrl && config?.supabaseAnonKey && config?.releaseFunctionUrl
       headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
       body: JSON.stringify(body),
     });
-    const result = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(String(result.error || 'Release operation failed').replaceAll('_', ' '));
+    const raw = await response.text();
+    let result = {};
+    try { result = raw ? JSON.parse(raw) : {}; } catch {}
+    if (!response.ok) {
+      const detail = result.error || result.message || raw || response.statusText || 'unknown error';
+      throw new Error(`Release operation failed (${response.status}): ${String(detail).replaceAll('_', ' ')}`);
+    }
     return result;
   }
 
