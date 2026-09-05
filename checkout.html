@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cache Compass Checkout</title>
+<link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="overrides.css">
+<style>main{max-width:760px;margin:70px auto;padding:0 24px}.checkout-card{border:1px solid rgba(199,155,76,.3);background:#0a1011;border-radius:16px;padding:28px}.checkout-grid{display:grid;gap:16px}.checkout-grid input,.checkout-grid select{width:100%;box-sizing:border-box;padding:12px;background:#081013;color:#f4efe4;border:1px solid #425055;border-radius:8px}.legal-box{display:flex;gap:10px;align-items:flex-start;padding:15px;border:1px solid #425055;border-radius:10px}.legal-box input{width:auto;margin-top:4px}.message{min-height:24px;color:#d5ad61}.sandbox-note{color:#e4bb66;font-weight:700}</style>
+</head>
+<body><main>
+<a href="/">← Back to Cache Compass</a>
+<div class="checkout-card">
+<p class="eyebrow">SECURE CHECKOUT</p><h1>Buy Cache Compass</h1>
+<p class="sandbox-note">Sandbox checkout — no live payment settings are changed by this page.</p>
+<div class="checkout-grid">
+<label>License capacity<select id="slots"><option value="3">3 avatars — $24.99</option><option value="5">5 avatars — $34.99</option><option value="10">10 avatars — $64.99</option></select></label>
+<label>Email<input id="email" type="email" autocomplete="email" placeholder="you@example.com"></label>
+<button id="signin" class="button button-primary" type="button">Email me a secure sign-in link</button>
+<div id="session-status" class="message"></div>
+<label class="legal-box"><input id="legal" type="checkbox"><span>I have read and agree to the <a href="/terms.html" target="_blank">Terms of Service &amp; Software License Agreement</a> and <a href="/privacy-policy.html" target="_blank">Privacy Policy</a>, and I understand this digitally delivered software is subject to the <a href="/refund-policy.html" target="_blank">Refund Policy</a>.</span></label>
+<button id="buy" class="button button-primary" type="button" disabled>Continue to Stripe</button>
+<div id="checkout-status" class="message" role="status"></div>
+</div></div>
+</main><script type="module" src="checkout.js"></script></body></html>
