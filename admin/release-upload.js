@@ -15,7 +15,7 @@ if (config?.supabaseUrl && config?.supabaseAnonKey && config?.releaseFunctionUrl
     const releaseNotes = String(form.elements.releaseNotes?.value || '').trim();
     const file = form.elements.file?.files?.[0];
     if (!file) { message.textContent = 'Choose the Cache Compass installer first.'; return; }
-    if (!/^[0-9]+\.[0-9]+\.[0-9]+([+-][0-9A-Za-z.-]+)?$/.test(version)) { message.textContent = 'Enter a valid release version.'; return; }
+    if (!/^[0-9]+\.[0-9]+\.[0-9]+(?:\.[0-9]+)?([+-][0-9A-Za-z.-]+)?$/.test(version)) { message.textContent = 'Enter a valid release version.'; return; }
     if (!file.name.toLowerCase().endsWith('.exe')) { message.textContent = 'The customer release must be the CacheCompass-Setup.exe installer.'; return; }
 
     try {
