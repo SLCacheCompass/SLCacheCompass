@@ -13,7 +13,14 @@ async function run(){
  for(let attempt=0;attempt<20;attempt++){
   const response=await fetch(STATUS_URL,{method:'POST',headers:{authorization:`Bearer ${session.access_token}`,'content-type':'application/json'},body:JSON.stringify({orderId})});
   const body=await response.json().catch(()=>({}));
-  if(response.ok&&body.fulfilled){status.textContent='Payment confirmed and your Cache Compass entitlement is ready.';details.innerHTML=`<p><strong>Purchased capacity:</strong> ${body.purchasedSlots} avatars</p><p><strong>Current total capacity:</strong> ${body.currentCapacity} avatars</p>`;return;}
+  if(response.ok&&body.fulfilled){
+   status.textContent='Payment confirmed and your Cache Compass entitlement is ready.';
+   const key=String(body.licenseKey||'');
+   details.innerHTML=`<p><strong>Purchased capacity:</strong> ${body.purchasedSlots} avatars</p><p><strong>Current total capacity:</strong> ${body.currentCapacity} avatars</p><p><strong>Your Cache Compass license key:</strong></p><p><code id="license-key"></code></p><button id="copy-key" class="button button-primary" type="button">Copy License Key</button><p>Keep this key with your purchase record. Open Firestorm on the avatar you want to register, then enter this key when Cache Compass asks you to activate.</p>`;
+   document.getElementById('license-key').textContent=key;
+   document.getElementById('copy-key').addEventListener('click',async event=>{await navigator.clipboard.writeText(key);event.currentTarget.textContent='Copied';});
+   return;
+  }
   if(!response.ok){status.textContent='We could not confirm the purchase yet. Please contact support if this persists.';return;}
   status.textContent='Payment received or still processing. Waiting for fulfillment…'; await sleep(1500);
  }
