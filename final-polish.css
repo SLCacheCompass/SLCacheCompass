@@ -50,77 +50,94 @@
   background:none !important;
 }
 
-/* In-world L$ purchase panel: compact hierarchy with side-by-side prices. */
+/* In-world L$ purchase panel: match the main three-card pricing section. */
 .linden-purchase-panel{
-  max-width:900px;
-  margin:34px auto 0;
-  padding:32px 32px 30px;
+  width:100%;
+  max-width:1120px;
+  margin:44px auto 0;
+  padding:40px 42px 38px;
   text-align:center;
   border:1px solid rgba(199,155,76,.30);
-  border-radius:18px;
+  border-radius:20px;
   background:linear-gradient(145deg,rgba(5,10,11,.72),rgba(7,18,19,.46));
-  box-shadow:0 18px 50px rgba(0,0,0,.16);
+  box-shadow:0 20px 58px rgba(0,0,0,.18);
 }
 .linden-purchase-panel .eyebrow{
-  margin-bottom:9px;
+  margin-bottom:12px;
 }
 .linden-purchase-panel h3{
-  margin:0 0 10px;
+  margin:0 0 12px;
   color:#f4efe4;
-  font-size:clamp(1.28rem,2vw,1.55rem);
+  font-size:clamp(1.35rem,2vw,1.62rem);
 }
 .linden-purchase-copy{
-  max-width:650px;
-  margin:0 auto 24px;
+  max-width:760px;
+  margin:0 auto 30px;
   color:#9da6a2;
-  line-height:1.6;
+  line-height:1.65;
 }
 .linden-price-grid{
   display:grid;
   grid-template-columns:repeat(3,minmax(0,1fr));
-  gap:12px;
-  max-width:780px;
-  margin:0 auto 24px;
+  gap:20px;
+  width:100%;
+  max-width:none;
+  margin:0 auto 30px;
 }
 .linden-price-option{
-  padding:18px 14px 16px;
+  min-height:190px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  padding:28px 22px 24px;
   border:1px solid rgba(42,154,151,.24);
-  border-radius:12px;
-  background:rgba(8,19,20,.72);
+  border-radius:16px;
+  background:#0b1112;
 }
 .linden-price-tier{
-  margin:0 0 7px;
+  margin:0 0 9px;
   color:#d9dedb;
-  font-size:.86rem;
+  font-size:.9rem;
   font-weight:800;
-  letter-spacing:.035em;
+  letter-spacing:.045em;
   text-transform:uppercase;
 }
 .linden-price-launch{
   margin:0;
   color:#f4efe4;
-  font-size:clamp(1.35rem,2.4vw,1.75rem);
+  font-size:clamp(1.55rem,2.6vw,2rem);
   font-weight:800;
-  line-height:1.1;
+  line-height:1.08;
 }
 .linden-launch-label{
   display:block;
-  margin-top:5px;
+  margin-top:7px;
   color:#c79b4c;
-  font-size:.68rem;
+  font-size:.7rem;
   font-weight:800;
   letter-spacing:.15em;
   text-transform:uppercase;
 }
 .linden-price-regular{
-  margin:11px 0 0;
-  padding-top:10px;
+  width:100%;
+  margin:15px 0 0;
+  padding-top:13px;
   border-top:1px solid rgba(217,222,219,.10);
   color:#9da6a2;
-  font-size:.82rem;
+  font-size:.84rem;
 }
 .linden-purchase-panel .button{
-  min-width:190px;
+  min-width:210px;
+}
+
+@media(max-width:900px){
+  .linden-purchase-panel{
+    max-width:680px;
+  }
+  .linden-price-grid{
+    grid-template-columns:1fr;
+  }
 }
 
 @media(max-width:760px){
@@ -135,14 +152,15 @@
     background-repeat:no-repeat !important;
   }
   .linden-purchase-panel{
-    padding:26px 18px 24px;
+    margin-top:34px;
+    padding:28px 18px 26px;
   }
   .linden-price-grid{
-    grid-template-columns:1fr;
     gap:10px;
     max-width:430px;
   }
   .linden-price-option{
+    min-height:0;
     display:grid;
     grid-template-columns:1fr auto;
     grid-template-areas:
@@ -151,7 +169,7 @@
     align-items:center;
     gap:2px 18px;
     text-align:left;
-    padding:15px 16px;
+    padding:16px;
   }
   .linden-price-tier{
     grid-area:tier;
