@@ -246,6 +246,14 @@
   box-shadow:none;
 }
 
+/* Keep the feature-set note on a single line at desktop widths. */
+@media(min-width:901px){
+  #pricing .pricing-grid-three + .pricing-note{
+    max-width:1120px;
+    white-space:nowrap;
+  }
+}
+
 @media(max-width:520px){
   .pricing-grid-three .price-card{
     padding:32px 28px 30px;
