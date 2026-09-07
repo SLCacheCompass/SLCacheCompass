@@ -115,3 +115,10 @@ if (footerLinks) {
     }
   });
 }
+
+// Replace the pre-launch navigation label with the existing licensed download path.
+const launchCta = document.querySelector('.nav-cta');
+if (launchCta && launchCta.textContent.trim() === 'Coming Soon') {
+  launchCta.textContent = 'Download';
+  launchCta.href = '/download.html';
+}
