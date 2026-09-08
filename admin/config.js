@@ -10,10 +10,10 @@ window.CACHE_COMPASS_ADMIN_CONFIG = {
 };
 
 window.addEventListener('load', () => {
-  for (const src of ['operations.js', 'capacity-approvals.js', 'issue-guard.js', 'release-upload.js?v=20260905-2']) {
+  for (const src of ['operations.js', 'capacity-approvals.js', 'issue-guard.js', 'release-upload.js?v=20260905-2', 'sales-purge.js']) {
     const module = document.createElement('script');
     module.type = 'module';
     module.src = src;
-    document.head.append(module);
+    document.head.appendChild(module);
   }
 }, { once: true });
