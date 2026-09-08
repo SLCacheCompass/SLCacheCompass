@@ -50,7 +50,7 @@
   background:none !important;
 }
 
-/* USD launch pricing: make launch price primary and place regular price beneath it. */
+/* USD launch pricing: natural reading order with the purchase action last. */
 .pricing-grid-three .price-card{
   display:flex;
   flex-direction:column;
@@ -65,6 +65,13 @@
   margin:0;
   padding-top:14px;
   border-top:1px solid rgba(217,222,219,.10);
+}
+.pricing-grid-three .price-card > .button{
+  order:6;
+  width:100%;
+  margin-top:26px;
+  padding:15px 18px;
+  text-align:center;
 }
 
 /* In-world L$ purchase panel: match the main three-card pricing section. */
@@ -260,5 +267,8 @@
   }
   .pricing-grid-three .price-card .price-was{
     gap:10px;
+  }
+  .pricing-grid-three .price-card > .button{
+    margin-top:22px;
   }
 }
