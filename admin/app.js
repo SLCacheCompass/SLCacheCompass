@@ -7,6 +7,7 @@ const app = document.querySelector('#app');
 const appMessage = document.querySelector('#app-message');
 const drawer = document.querySelector('#customer-drawer');
 const issueModal = document.querySelector('#issue-modal');
+const purgeModal = document.querySelector('#purge-modal');
 
 let supabase = null;
 let licenses = [];
@@ -15,6 +16,14 @@ let selectedCustomerKey = null;
 let issueCustomerKey = null;
 let previousLogin = null;
 let loading = false;
+let attentionOnly = false;
+let attentionAutoOpenPending = false;
+let focusedLicenseId = null;
+let purgeTarget = null;
+
+const CUSTOMER_SORT_KEY = 'cacheCompassCustomerSort';
+const LICENSE_SORT_KEY = 'cacheCompassLicenseSort';
+const ACTIVITY_COLLAPSED_KEY = 'cacheCompassRecentActivityCollapsed';
 
 const configured = config && !Object.values(config).some((value) => !value || String(value).includes('YOUR_'));
 if (!configured) {
@@ -26,9 +35,18 @@ if (!configured) {
 }
 
 async function start() {
+  restorePreferences();
   const { data } = await supabase.auth.getSession();
   await showSession(data.session);
   supabase.auth.onAuthStateChange((_event, session) => showSession(session));
+}
+
+function restorePreferences() {
+  const customerSort = localStorage.getItem(CUSTOMER_SORT_KEY);
+  const licenseSort = localStorage.getItem(LICENSE_SORT_KEY);
+  if (customerSort && document.querySelector(`#customer-sort option[value="${CSS.escape(customerSort)}"]`)) document.querySelector('#customer-sort').value = customerSort;
+  if (licenseSort && document.querySelector(`#license-sort option[value="${CSS.escape(licenseSort)}"]`)) document.querySelector('#license-sort').value = licenseSort;
+  setActivityCollapsed(localStorage.getItem(ACTIVITY_COLLAPSED_KEY) === '1', false);
 }
 
 async function showSession(session) {
@@ -69,6 +87,7 @@ for (const tab of document.querySelectorAll('.tab')) tab.addEventListener('click
 for (const jump of document.querySelectorAll('[data-jump]')) jump.addEventListener('click', () => switchView(jump.dataset.jump));
 for (const close of document.querySelectorAll('[data-close-drawer]')) close.addEventListener('click', closeDrawer);
 for (const close of document.querySelectorAll('[data-close-modal]')) close.addEventListener('click', closeIssueModal);
+for (const close of document.querySelectorAll('[data-close-purge-modal]')) close.addEventListener('click', closePurgeModal);
 
 document.querySelector('#global-search-button').addEventListener('click', () => {
   switchView('customers');
@@ -79,23 +98,56 @@ document.querySelector('#drawer-add-license').addEventListener('click', () => {
   const customer = findCustomer(selectedCustomerKey);
   if (customer) openIssueModal(customer);
 });
+document.querySelector('#drawer-edit-name').addEventListener('click', async () => {
+  const customer = findCustomer(selectedCustomerKey);
+  if (customer) await editNameForIdentity(customer.primaryUuid, customer.name);
+});
+document.querySelector('#drawer-purge-customer').addEventListener('click', () => {
+  const customer = findCustomer(selectedCustomerKey);
+  if (customer?.customerId) openPurgeModal('customer', customer.customerId, customer);
+});
 document.querySelector('#export-button').addEventListener('click', exportCsv);
 document.querySelector('#release-form').addEventListener('submit', publishRelease);
 document.querySelector('#issue-form').addEventListener('submit', issueLicense);
 document.querySelector('#note-form').addEventListener('submit', addCustomerNote);
+document.querySelector('#activity-collapse').addEventListener('click', () => {
+  const collapsed = !document.querySelector('#recent-activity-panel').classList.contains('collapsed');
+  setActivityCollapsed(collapsed, true);
+});
+document.querySelector('#attention-jump').addEventListener('click', () => {
+  attentionOnly = true;
+  attentionAutoOpenPending = true;
+  focusedLicenseId = null;
+  licenseSearch.value = '';
+  licenseStatus.value = '';
+  switchView('licenses');
+});
+document.querySelector('#license-attention-clear').addEventListener('click', () => {
+  attentionOnly = false;
+  focusedLicenseId = null;
+  closeDrawer();
+  renderLicenseTable();
+});
+
+document.querySelector('#purge-confirmation').addEventListener('input', updatePurgeConfirmState);
+document.querySelector('#purge-confirm-button').addEventListener('click', executePurge);
 
 const customerSearch = document.querySelector('#customer-search');
 const customerStatus = document.querySelector('#customer-status-filter');
+const customerSort = document.querySelector('#customer-sort');
 document.querySelector('#customer-search-button').addEventListener('click', renderCustomers);
 customerSearch.addEventListener('input', renderCustomers);
 customerStatus.addEventListener('change', renderCustomers);
+customerSort.addEventListener('change', () => { localStorage.setItem(CUSTOMER_SORT_KEY, customerSort.value); renderCustomers(); });
 customerSearch.addEventListener('keydown', (event) => { if (event.key === 'Enter') renderCustomers(); });
 
 const licenseSearch = document.querySelector('#license-search');
 const licenseStatus = document.querySelector('#license-status-filter');
+const licenseSort = document.querySelector('#license-sort');
 document.querySelector('#license-search-button').addEventListener('click', renderLicenseTable);
 licenseSearch.addEventListener('input', renderLicenseTable);
 licenseStatus.addEventListener('change', renderLicenseTable);
+licenseSort.addEventListener('change', () => { localStorage.setItem(LICENSE_SORT_KEY, licenseSort.value); renderLicenseTable(); });
 licenseSearch.addEventListener('keydown', (event) => { if (event.key === 'Enter') renderLicenseTable(); });
 
 document.querySelector('#dashboard-search-button').addEventListener('click', runDashboardSearch);
@@ -131,6 +183,22 @@ async function api(path = '', options = {}) {
   return result;
 }
 
+async function purgeApi(payload) {
+  if (!config.purgeFunctionUrl) throw new Error('Purge service is not configured.');
+  const response = await fetch(config.purgeFunctionUrl, {
+    method: 'POST',
+    headers: await authHeaders(),
+    body: JSON.stringify(payload),
+  });
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const error = new Error(result.detail || result.error || 'Purge request failed');
+    error.code = result.error || '';
+    throw error;
+  }
+  return result;
+}
+
 async function refreshData() {
   if (loading) return;
   loading = true;
@@ -152,35 +220,55 @@ async function refreshData() {
 function buildCustomers(items) {
   const map = new Map();
   for (const license of items) {
-    const email = customerEmailForLicense(license);
-    const purchaserUuid = license.purchaser_avatar_uuid || '';
+    const dbCustomer = license.customer || null;
+    const email = dbCustomer?.email || customerEmailForLicense(license);
+    const purchaserUuid = dbCustomer?.primary_avatar_uuid || license.purchaser_avatar_uuid || '';
     const firstAvatar = Array.isArray(license.avatars) ? license.avatars[0] : null;
-    const key = email ? `email:${email.toLowerCase()}` : purchaserUuid ? `uuid:${purchaserUuid.toLowerCase()}` : firstAvatar?.avatar_uuid ? `uuid:${firstAvatar.avatar_uuid.toLowerCase()}` : `license:${license.id}`;
-    if (!map.has(key)) map.set(key, { key, licenses: [], email: email || '', primaryUuid: purchaserUuid || firstAvatar?.avatar_uuid || '', name: customerNameForLicense(license), firstDate: license.created_at, lastDate: license.created_at });
+    const key = license.customer_id ? `customer:${license.customer_id}` : email ? `email:${email.toLowerCase()}` : purchaserUuid ? `uuid:${purchaserUuid.toLowerCase()}` : firstAvatar?.avatar_uuid ? `uuid:${firstAvatar.avatar_uuid.toLowerCase()}` : `license:${license.id}`;
+    const firstDate = dbCustomer?.created_at || license.created_at;
+    if (!map.has(key)) map.set(key, {
+      key,
+      customerId: license.customer_id || dbCustomer?.id || '',
+      licenses: [],
+      email: email || '',
+      primaryUuid: purchaserUuid || firstAvatar?.avatar_uuid || '',
+      name: dbCustomer?.primary_avatar_name || customerNameForLicense(license),
+      firstDate,
+      lastDate: license.created_at,
+    });
     const customer = map.get(key);
     customer.licenses.push(license);
     if (!customer.email && email) customer.email = email;
     if (!customer.primaryUuid && purchaserUuid) customer.primaryUuid = purchaserUuid;
-    const candidateName = customerNameForLicense(license);
+    if (!customer.customerId && license.customer_id) customer.customerId = license.customer_id;
+    const candidateName = dbCustomer?.primary_avatar_name || customerNameForLicense(license);
     if ((!customer.name || customer.name.startsWith('Customer ')) && candidateName) customer.name = candidateName;
-    if (new Date(license.created_at) < new Date(customer.firstDate)) customer.firstDate = license.created_at;
+    if (new Date(firstDate) < new Date(customer.firstDate)) customer.firstDate = firstDate;
     if (new Date(license.created_at) > new Date(customer.lastDate)) customer.lastDate = license.created_at;
   }
-  return [...map.values()].map((customer) => ({
-    ...customer,
-    totalSlots: customer.licenses.reduce((sum, license) => sum + Number(license.max_avatars || license.tier || 0), 0),
-    usedSlots: customer.licenses.reduce((sum, license) => sum + (license.avatars?.length || 0), 0),
-    status: customerStatusForLicenses(customer.licenses),
-    sources: [...new Set(customer.licenses.map((license) => String(license.payment_method || 'manual').toUpperCase()))],
-  })).sort((a, b) => new Date(b.lastDate) - new Date(a.lastDate));
+
+  return [...map.values()].map((customer) => {
+    const purchaseDates = customer.licenses.flatMap((license) => (license.purchases || []).map((purchase) => purchase.paid_at || purchase.purchased_at || purchase.created_at)).filter(Boolean);
+    const activityDates = customer.licenses.flatMap((license) => [license.last_used_at, license.last_validated_at, license.updated_at, ...(license.avatars || []).map((avatar) => avatar.last_validated_at)]).filter(Boolean);
+    return {
+      ...customer,
+      totalSlots: customer.licenses.reduce((sum, license) => sum + Number(license.max_avatars || license.tier || 0), 0),
+      usedSlots: customer.licenses.reduce((sum, license) => sum + (license.avatars?.length || 0), 0),
+      status: customerStatusForLicenses(customer.licenses),
+      sources: [...new Set(customer.licenses.flatMap((license) => (license.purchases?.length ? license.purchases.map((purchase) => purchase.channel || purchase.processor) : [license.payment_method || 'manual'])).filter(Boolean).map((value) => String(value).toUpperCase()))],
+      lastPurchaseDate: purchaseDates.length ? maxDate(purchaseDates) : customer.lastDate,
+      lastActiveDate: activityDates.length ? maxDate(activityDates) : customer.lastDate,
+    };
+  });
 }
 
 function customerNameForLicense(license) {
+  if (license.customer?.primary_avatar_name) return license.customer.primary_avatar_name;
   const avatars = Array.isArray(license.avatars) ? license.avatars : [];
   const purchaser = avatars.find((avatar) => avatar.avatar_uuid === license.purchaser_avatar_uuid);
   if (purchaser?.avatar_name) return purchaser.avatar_name;
-  const orderName = (license.orders || []).find((order) => order.purchaser_avatar_name)?.purchaser_avatar_name;
-  if (orderName) return orderName;
+  const purchaseName = (license.purchases || []).find((purchase) => purchase.purchaser_avatar_name)?.purchaser_avatar_name;
+  if (purchaseName) return purchaseName;
   const named = avatars.find((avatar) => avatar.avatar_name)?.avatar_name;
   if (named) return named;
   const email = customerEmailForLicense(license);
@@ -189,7 +277,7 @@ function customerNameForLicense(license) {
 }
 
 function customerEmailForLicense(license) {
-  return (license.orders || []).find((order) => order.purchaser_email)?.purchaser_email || '';
+  return license.customer?.email || (license.purchases || []).find((purchase) => purchase.purchaser_email)?.purchaser_email || (license.orders || []).find((order) => order.purchaser_email)?.purchaser_email || '';
 }
 
 function customerStatusForLicenses(items) {
@@ -214,7 +302,7 @@ function renderDashboard() {
   const newLicenses = licenses.filter((license) => new Date(license.created_at).getTime() > cutoff);
   const newCustomers = customers.filter((customer) => new Date(customer.firstDate).getTime() > cutoff);
   const avatarActivity = licenses.flatMap((license) => (license.avatarHistory || []).map((row) => ({ ...row, license }))).filter((row) => new Date(row.occurred_at || 0).getTime() > cutoff && ['added','registered','replaced','replace'].some((word) => String(row.action || '').toLowerCase().includes(word)));
-  const attention = licenses.filter((license) => license.status !== 'active');
+  const attention = licenses.filter((license) => Boolean(attentionReason(license)));
 
   document.querySelector('#metric-customers').textContent = newCustomers.length;
   document.querySelector('#metric-licenses').textContent = newLicenses.length;
@@ -242,19 +330,37 @@ function renderDashboard() {
   }
 }
 
+function setActivityCollapsed(collapsed, persist = true) {
+  const panel = document.querySelector('#recent-activity-panel');
+  const button = document.querySelector('#activity-collapse');
+  if (!panel || !button) return;
+  panel.classList.toggle('collapsed', collapsed);
+  button.textContent = collapsed ? 'Expand' : 'Minimize';
+  button.setAttribute('aria-expanded', String(!collapsed));
+  if (persist) localStorage.setItem(ACTIVITY_COLLAPSED_KEY, collapsed ? '1' : '0');
+}
+
 function renderCustomers() {
   const query = customerSearch.value.trim().toLowerCase();
   const status = customerStatus.value;
   const filtered = customers.filter((customer) => (!status || customer.status === status) && matchesCustomer(customer, query));
+  filtered.sort(customerComparator(customerSort.value));
   const body = document.querySelector('#customer-rows');
   body.replaceChildren();
   for (const customer of filtered) {
     const row = document.createElement('tr');
-    row.innerHTML = `<td class="name-cell"><strong>${escapeHtml(customer.name)}</strong><span>${escapeHtml(customer.email || 'No email recorded')}</span></td><td><span class="uuid-short" title="${escapeHtml(customer.primaryUuid)}">${escapeHtml(shortUuid(customer.primaryUuid))}</span></td><td>${customer.licenses.length}</td><td>${customer.usedSlots} / ${customer.totalSlots}</td><td>${escapeHtml(customer.sources.join(' · '))}</td><td><span class="status-pill ${escapeHtml(customer.status)}">${escapeHtml(customer.status)}</span></td><td>${escapeHtml(shortDate(customer.lastDate))}</td>`;
+    row.innerHTML = `<td class="name-cell"><strong>${escapeHtml(customer.name)}</strong><span>${escapeHtml(customer.email || 'No email recorded')}</span></td><td><span class="uuid-short" title="${escapeHtml(customer.primaryUuid)}">${escapeHtml(shortUuid(customer.primaryUuid))}</span></td><td>${customer.licenses.length}</td><td>${customer.usedSlots} / ${customer.totalSlots}</td><td>${escapeHtml(customer.sources.join(' · '))}</td><td><span class="status-pill ${escapeHtml(customer.status)}">${escapeHtml(customer.status)}</span></td><td>${escapeHtml(shortDate(customer.lastPurchaseDate || customer.lastDate))}</td><td class="row-actions"></td>`;
     row.addEventListener('click', () => openDrawer(customer));
+    const actions = row.querySelector('.row-actions');
+    const edit = makeMiniButton('Edit Name', async (event) => { event.stopPropagation(); await editNameForIdentity(customer.primaryUuid, customer.name); });
+    actions.append(edit);
+    const purge = makeMiniButton('Purge', (event) => { event.stopPropagation(); if (customer.customerId) openPurgeModal('customer', customer.customerId, customer); }, 'danger');
+    purge.disabled = !customer.customerId;
+    purge.title = customer.customerId ? 'Owner-only permanent purge' : 'This derived customer record has no database customer ID to purge.';
+    actions.append(purge);
     body.append(row);
   }
-  if (!filtered.length) body.innerHTML = '<tr><td colspan="7" class="muted">No matching customers.</td></tr>';
+  if (!filtered.length) body.innerHTML = '<tr><td colspan="8" class="muted">No matching customers.</td></tr>';
   document.querySelector('#customer-count').textContent = `${filtered.length} customer${filtered.length === 1 ? '' : 's'}`;
 }
 
@@ -264,26 +370,69 @@ function matchesCustomer(customer, query) {
   for (const license of customer.licenses) {
     values.push(license.key_last4, license.external_transaction_id, license.payment_method);
     for (const avatar of license.avatars || []) values.push(avatar.avatar_name, avatar.avatar_uuid);
+    for (const purchase of license.purchases || []) values.push(purchase.purchaser_email, purchase.purchaser_avatar_name, purchase.processor_transaction_id, purchase.external_order_id);
     for (const order of license.orders || []) values.push(order.purchaser_email, order.purchaser_avatar_name);
   }
   return values.some((value) => String(value || '').toLowerCase().includes(query));
 }
 
+function customerComparator(sort) {
+  const text = (value) => String(value || '').toLocaleLowerCase();
+  const newest = (a, b, key) => dateValue(b[key]) - dateValue(a[key]);
+  const oldest = (a, b, key) => dateValue(a[key]) - dateValue(b[key]);
+  switch (sort) {
+    case 'name-desc': return (a, b) => text(b.name).localeCompare(text(a.name));
+    case 'newest': return (a, b) => newest(a, b, 'firstDate');
+    case 'oldest': return (a, b) => oldest(a, b, 'firstDate');
+    case 'licenses-most': return (a, b) => b.licenses.length - a.licenses.length || text(a.name).localeCompare(text(b.name));
+    case 'licenses-fewest': return (a, b) => a.licenses.length - b.licenses.length || text(a.name).localeCompare(text(b.name));
+    case 'slots-most': return (a, b) => b.usedSlots - a.usedSlots || text(a.name).localeCompare(text(b.name));
+    case 'slots-fewest': return (a, b) => a.usedSlots - b.usedSlots || text(a.name).localeCompare(text(b.name));
+    case 'purchase-recent': return (a, b) => newest(a, b, 'lastPurchaseDate');
+    case 'purchase-oldest': return (a, b) => oldest(a, b, 'lastPurchaseDate');
+    case 'active-recent': return (a, b) => newest(a, b, 'lastActiveDate');
+    case 'name-asc':
+    default: return (a, b) => text(a.name).localeCompare(text(b.name));
+  }
+}
+
 function renderLicenseTable() {
   const query = licenseSearch.value.trim().toLowerCase();
   const status = licenseStatus.value;
-  const filtered = licenses.filter((license) => (!status || license.status === status) && matchesLicense(license, query)).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  const filtered = licenses.filter((license) => (!status || license.status === status) && (!attentionOnly || attentionReason(license)) && matchesLicense(license, query));
+  filtered.sort(licenseComparator(licenseSort.value));
   const body = document.querySelector('#license-rows');
   body.replaceChildren();
+  let onlyRow = null;
   for (const license of filtered) {
     const customer = customerForLicense(license);
+    const reason = attentionReason(license);
     const row = document.createElement('tr');
-    row.innerHTML = `<td class="name-cell"><strong>${escapeHtml(customer?.name || customerNameForLicense(license))}</strong><span>${escapeHtml(customer?.email || '')}</span></td><td>${escapeHtml(`${license.tier}-avatar •••• ${license.key_last4 || '—'}`)}</td><td>${license.avatars?.length || 0} / ${license.max_avatars || license.tier}</td><td>${escapeHtml(paymentText(license))}</td><td><span class="status-pill ${escapeHtml(license.status)}">${escapeHtml(license.status)}</span></td><td>${escapeHtml(shortDate(license.created_at))}</td>`;
-    if (customer) row.addEventListener('click', () => openDrawer(customer));
+    row.dataset.licenseId = license.id;
+    if (reason) row.classList.add('needs-attention');
+    row.innerHTML = `<td class="name-cell"><strong>${escapeHtml(customer?.name || customerNameForLicense(license))}</strong><span>${escapeHtml(customer?.email || '')}</span></td><td>${escapeHtml(`${license.tier}-avatar •••• ${license.key_last4 || '—'}`)}</td><td>${license.avatars?.length || 0} / ${license.max_avatars || license.tier}</td><td>${escapeHtml(paymentText(license))}</td><td><span class="status-pill ${escapeHtml(license.status)}">${escapeHtml(license.status)}</span>${reason ? `<span class="attention-badge">Needs Attention</span><span class="attention-reason">${escapeHtml(reason)}</span>` : ''}</td><td>${escapeHtml(shortDate(license.created_at))}</td><td class="row-actions"></td>`;
+    if (customer) row.addEventListener('click', () => openDrawer(customer, license.id));
+    const actions = row.querySelector('.row-actions');
+    const identityUuid = license.purchaser_avatar_uuid || license.avatars?.[0]?.avatar_uuid || '';
+    const identityName = customer?.name || license.avatars?.find((avatar) => avatar.avatar_uuid === identityUuid)?.avatar_name || customerNameForLicense(license);
+    const edit = makeMiniButton('Edit Name', async (event) => { event.stopPropagation(); await editNameForIdentity(identityUuid, identityName); });
+    edit.disabled = !identityUuid;
+    actions.append(edit);
+    actions.append(makeMiniButton('Purge', (event) => { event.stopPropagation(); openPurgeModal('license', license.id, license); }, 'danger'));
     body.append(row);
+    onlyRow = row;
   }
-  if (!filtered.length) body.innerHTML = '<tr><td colspan="6" class="muted">No matching licenses.</td></tr>';
-  document.querySelector('#license-count').textContent = `${filtered.length} license${filtered.length === 1 ? '' : 's'}`;
+  if (!filtered.length) body.innerHTML = `<tr><td colspan="7" class="muted">${attentionOnly ? 'No licenses currently need attention.' : 'No matching licenses.'}</td></tr>`;
+  document.querySelector('#license-count').textContent = `${filtered.length} license${filtered.length === 1 ? '' : 's'}${attentionOnly ? ' needing attention' : ''}`;
+  document.querySelector('#license-attention-clear').hidden = !attentionOnly;
+
+  if (attentionOnly && attentionAutoOpenPending && filtered.length === 1) {
+    attentionAutoOpenPending = false;
+    focusedLicenseId = filtered[0].id;
+    onlyRow?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    const customer = customerForLicense(filtered[0]);
+    if (customer) setTimeout(() => openDrawer(customer, filtered[0].id), 120);
+  }
 }
 
 function matchesLicense(license, query) {
@@ -291,17 +440,65 @@ function matchesLicense(license, query) {
   const customer = customerForLicense(license);
   const values = [license.key_last4, license.external_transaction_id, license.purchaser_avatar_uuid, license.payment_method, customer?.name, customer?.email];
   for (const avatar of license.avatars || []) values.push(avatar.avatar_name, avatar.avatar_uuid);
+  for (const purchase of license.purchases || []) values.push(purchase.processor_transaction_id, purchase.external_order_id, purchase.purchaser_avatar_name, purchase.purchaser_email);
   return values.some((value) => String(value || '').toLowerCase().includes(query));
+}
+
+function licenseComparator(sort) {
+  const text = (value) => String(value || '').toLocaleLowerCase();
+  const name = (license) => customerForLicense(license)?.name || customerNameForLicense(license);
+  const capacity = (license) => Number(license.max_avatars || license.tier || 0);
+  const used = (license) => license.avatars?.length || 0;
+  const activeAt = (license) => maxDate([license.last_used_at, license.last_validated_at, license.updated_at, ...(license.avatars || []).map((avatar) => avatar.last_validated_at)].filter(Boolean));
+  const attention = (license) => attentionReason(license) ? 1 : 0;
+  const restricted = (license) => license.status === 'revoked' ? 2 : license.status === 'suspended' ? 1 : 0;
+  switch (sort) {
+    case 'issued-oldest': return (a, b) => dateValue(a.created_at) - dateValue(b.created_at);
+    case 'customer-asc': return (a, b) => text(name(a)).localeCompare(text(name(b)));
+    case 'customer-desc': return (a, b) => text(name(b)).localeCompare(text(name(a)));
+    case 'capacity-high': return (a, b) => capacity(b) - capacity(a) || dateValue(b.created_at) - dateValue(a.created_at);
+    case 'capacity-low': return (a, b) => capacity(a) - capacity(b) || dateValue(b.created_at) - dateValue(a.created_at);
+    case 'used-most': return (a, b) => used(b) - used(a) || dateValue(b.created_at) - dateValue(a.created_at);
+    case 'used-fewest': return (a, b) => used(a) - used(b) || dateValue(b.created_at) - dateValue(a.created_at);
+    case 'active-recent': return (a, b) => dateValue(activeAt(b)) - dateValue(activeAt(a));
+    case 'status': return (a, b) => text(a.status).localeCompare(text(b.status)) || dateValue(b.created_at) - dateValue(a.created_at);
+    case 'attention-first': return (a, b) => attention(b) - attention(a) || dateValue(b.created_at) - dateValue(a.created_at);
+    case 'restricted-first': return (a, b) => restricted(b) - restricted(a) || dateValue(b.created_at) - dateValue(a.created_at);
+    case 'issued-newest':
+    default: return (a, b) => dateValue(b.created_at) - dateValue(a.created_at);
+  }
+}
+
+function attentionReason(license) {
+  if (license.status === 'active') return '';
+  const relevant = (license.events || []).find((event) => event?.metadata?.reason) || (license.events || [])[0];
+  const explicit = relevant?.metadata?.reason;
+  if (explicit) return `${humanize(relevant.event_type || license.status)}: ${humanize(explicit)}`;
+  if (license.status === 'suspended') return 'License is suspended and may require owner review.';
+  if (license.status === 'revoked') return 'License is revoked and may require owner review.';
+  return `License status is ${humanize(license.status)}.`;
 }
 
 function renderSales() {
   const rows = [];
+  const seen = new Set();
   for (const license of licenses) {
     const customer = customerForLicense(license);
-    if (license.orders?.length) {
-      for (const order of license.orders) rows.push({ customer, source: order.provider || license.payment_method, amount: formatMoney(order.amount_minor, order.currency), license, receipt: order.external_transaction_id || license.external_transaction_id || '', at: order.created_at || license.created_at });
-    } else {
-      rows.push({ customer, source: license.payment_method || 'manual', amount: paymentText(license), license, receipt: license.external_transaction_id || '', at: license.created_at });
+    for (const purchase of license.purchases || []) {
+      if (!purchase?.id || seen.has(purchase.id)) continue;
+      seen.add(purchase.id);
+      rows.push({
+        id: purchase.id,
+        customer,
+        source: purchase.channel || purchase.processor || license.payment_method,
+        amount: purchaseAmountText(purchase),
+        license,
+        receipt: purchase.processor_transaction_id || purchase.external_order_id || license.external_transaction_id || '',
+        at: purchase.paid_at || purchase.purchased_at || purchase.created_at || license.created_at,
+      });
+    }
+    if (!(license.purchases || []).length) {
+      rows.push({ id: '', customer, source: license.payment_method || 'manual', amount: paymentText(license), license, receipt: license.external_transaction_id || '', at: license.created_at, legacy: true });
     }
   }
   rows.sort((a, b) => new Date(b.at) - new Date(a.at));
@@ -309,34 +506,52 @@ function renderSales() {
   body.replaceChildren();
   for (const sale of rows) {
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td class="name-cell"><strong>${escapeHtml(sale.customer?.name || 'Customer')}</strong></td><td>${escapeHtml(String(sale.source || '').toUpperCase())}</td><td>${escapeHtml(sale.amount || '—')}</td><td>${escapeHtml(`${sale.license.tier}-avatar •••• ${sale.license.key_last4 || '—'}`)}</td><td><span class="uuid-short">${escapeHtml(shortReceipt(sale.receipt))}</span></td><td>${escapeHtml(shortDate(sale.at))}</td>`;
-    if (sale.customer) tr.addEventListener('click', () => openDrawer(sale.customer));
+    tr.innerHTML = `<td class="name-cell"><strong>${escapeHtml(sale.customer?.name || 'Customer')}</strong></td><td>${escapeHtml(String(sale.source || '').toUpperCase())}</td><td>${escapeHtml(sale.amount || '—')}</td><td>${escapeHtml(`${sale.license.tier}-avatar •••• ${sale.license.key_last4 || '—'}`)}</td><td><span class="uuid-short">${escapeHtml(shortReceipt(sale.receipt))}</span></td><td>${escapeHtml(shortDate(sale.at))}</td><td class="row-actions"></td>`;
+    if (sale.customer) tr.addEventListener('click', () => openDrawer(sale.customer, sale.license.id));
+    const purge = makeMiniButton('Purge', (event) => { event.stopPropagation(); if (sale.id) openPurgeModal('sale', sale.id, sale); }, 'danger');
+    purge.disabled = !sale.id;
+    purge.title = sale.id ? 'Owner-only permanent purge of this internal sale record' : 'This legacy row has no standalone purchase record to purge.';
+    tr.querySelector('.row-actions').append(purge);
     body.append(tr);
   }
-  if (!rows.length) body.innerHTML = '<tr><td colspan="6" class="muted">No payment records.</td></tr>';
+  if (!rows.length) body.innerHTML = '<tr><td colspan="7" class="muted">No payment records.</td></tr>';
 }
 
-function openDrawer(customer) {
+function purchaseAmountText(purchase) {
+  const amount = purchase.original_amount ?? purchase.amount;
+  const currency = purchase.original_currency || purchase.currency || '';
+  if (amount == null) return '—';
+  if (String(currency).toUpperCase() === 'USD') return `$${Number(amount).toFixed(2)}`;
+  return `${currency} ${amount}`.trim();
+}
+
+function openDrawer(customer, licenseId = null) {
   selectedCustomerKey = customer.key;
+  focusedLicenseId = licenseId || focusedLicenseId;
   renderDrawer(customer);
   drawer.classList.add('open');
   drawer.setAttribute('aria-hidden', 'false');
+  if (licenseId) setTimeout(() => drawer.querySelector(`[data-license-block="${CSS.escape(licenseId)}"]`)?.scrollIntoView({ block: 'center', behavior: 'smooth' }), 80);
 }
 
 function closeDrawer() {
   drawer.classList.remove('open');
   drawer.setAttribute('aria-hidden', 'true');
+  focusedLicenseId = null;
 }
 
 function renderDrawer(customer) {
   document.querySelector('#drawer-name').textContent = customer.name;
   document.querySelector('#drawer-uuid').textContent = customer.primaryUuid || 'No primary UUID recorded';
+  document.querySelector('#drawer-edit-name').disabled = !customer.primaryUuid;
+  document.querySelector('#drawer-purge-customer').disabled = !customer.customerId;
+  document.querySelector('#drawer-purge-customer').title = customer.customerId ? 'Owner-only permanent purge' : 'No database customer ID is available for this record.';
   document.querySelector('#customer-summary').innerHTML = [
     ['Licenses', customer.licenses.length],
     ['Slots', `${customer.usedSlots} / ${customer.totalSlots}`],
     ['Status', humanize(customer.status)],
     ['Customer since', shortDate(customer.firstDate)],
-    ['Last purchase', shortDate(customer.lastDate)],
+    ['Last purchase', shortDate(customer.lastPurchaseDate || customer.lastDate)],
     ['Email', customer.email || 'Not recorded'],
   ].map(([label, value]) => `<div class="summary-chip"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div>`).join('');
 
@@ -350,10 +565,19 @@ function renderDrawer(customer) {
 function renderLicenseBlock(license) {
   const block = document.createElement('div');
   block.className = 'license-block';
+  block.dataset.licenseBlock = license.id;
+  const reason = attentionReason(license);
+  if (reason) block.classList.add('needs-attention');
+  if (focusedLicenseId === license.id) block.classList.add('focused-license');
   const head = document.createElement('div');
   head.className = 'license-block-head';
-  head.innerHTML = `<div><h4>${escapeHtml(`${license.tier}-Avatar License · •••• ${license.key_last4 || '—'}`)} <span class="status-pill ${escapeHtml(license.status)}">${escapeHtml(license.status)}</span></h4><p>${escapeHtml(`${license.avatars?.length || 0}/${license.max_avatars || license.tier} slots · ${paymentText(license)} · ${shortDate(license.created_at)}`)}</p></div><div class="license-toolbar"></div>`;
+  head.innerHTML = `<div><h4>${escapeHtml(`${license.tier}-Avatar License · •••• ${license.key_last4 || '—'}`)} <span class="status-pill ${escapeHtml(license.status)}">${escapeHtml(license.status)}</span>${reason ? ' <span class="attention-badge">Needs Attention</span>' : ''}</h4><p>${escapeHtml(`${license.avatars?.length || 0}/${license.max_avatars || license.tier} slots · ${paymentText(license)} · ${shortDate(license.created_at)}`)}</p>${reason ? `<p class="attention-reason block-reason">${escapeHtml(reason)}</p>` : ''}</div><div class="license-toolbar"></div>`;
   const toolbar = head.querySelector('.license-toolbar');
+  const identityUuid = license.purchaser_avatar_uuid || license.avatars?.[0]?.avatar_uuid || '';
+  const identityName = license.avatars?.find((avatar) => avatar.avatar_uuid === identityUuid)?.avatar_name || customerNameForLicense(license);
+  const editName = makeMiniButton('Edit Name', async (event) => { event.stopPropagation(); await editNameForIdentity(identityUuid, identityName); });
+  editName.disabled = !identityUuid;
+  toolbar.append(editName);
   for (const next of ['active','suspended','revoked']) {
     if (next === license.status) continue;
     const button = document.createElement('button');
@@ -361,12 +585,13 @@ function renderLicenseBlock(license) {
     button.textContent = next === 'active' ? 'Reactivate' : humanize(next);
     button.addEventListener('click', async (event) => {
       event.stopPropagation();
-      const reason = prompt(`Reason for changing this license to ${next}:`) ?? '';
-      if (!reason.trim()) return;
-      await mutate({ action: 'set_status', licenseId: license.id, status: next, reason });
+      const statusReason = prompt(`Reason for changing this license to ${next}:`) ?? '';
+      if (!statusReason.trim()) return;
+      await mutate({ action: 'set_status', licenseId: license.id, status: next, reason: statusReason });
     });
     toolbar.append(button);
   }
+  toolbar.append(makeMiniButton('Purge', (event) => { event.stopPropagation(); openPurgeModal('license', license.id, license); }, 'danger'));
   block.append(head);
 
   const avatarList = document.createElement('div');
@@ -394,11 +619,8 @@ function renderAvatarLine(license, avatar) {
   const rename = document.createElement('button');
   rename.className = 'mini-button';
   rename.textContent = 'Edit';
-  rename.addEventListener('click', async () => {
-    const avatarName = prompt('Correct avatar name:', avatar.avatar_name || '') ?? '';
-    if (!avatarName.trim()) return;
-    await mutate({ action: 'update_avatar_name', licenseId: license.id, avatarUuid: avatar.avatar_uuid, avatarName });
-  });
+  rename.title = 'Edit the displayed name. The UUID stays locked.';
+  rename.addEventListener('click', async () => editNameForIdentity(avatar.avatar_uuid, avatar.avatar_name || ''));
 
   const replace = document.createElement('button');
   replace.className = 'mini-button';
@@ -425,6 +647,16 @@ function renderAvatarLine(license, avatar) {
 
   actions.append(rename, replace, remove);
   return row;
+}
+
+async function editNameForIdentity(avatarUuid, currentName) {
+  if (!avatarUuid) {
+    appMessage.textContent = 'This record has no locked avatar UUID to edit.';
+    return;
+  }
+  const avatarName = prompt(`Correct avatar name for UUID ${avatarUuid}:`, currentName || '') ?? '';
+  if (!avatarName.trim() || avatarName.trim() === String(currentName || '').trim()) return;
+  await mutate({ action: 'update_avatar_name_global', avatarUuid, avatarName: avatarName.trim() });
 }
 
 function renderCustomerHistory(customer) {
@@ -526,6 +758,84 @@ async function mutate(payload) {
   }
 }
 
+async function openPurgeModal(kind, id, source) {
+  if (!id) return;
+  purgeTarget = { kind, id, source };
+  purgeModal.hidden = false;
+  document.querySelector('#purge-title').textContent = `Purge ${humanize(kind)}`;
+  document.querySelector('#purge-target-label').textContent = 'Checking what will be removed…';
+  document.querySelector('#purge-items').replaceChildren();
+  document.querySelector('#purge-retained').hidden = true;
+  document.querySelector('#purge-note').textContent = '';
+  document.querySelector('#purge-confirmation').value = '';
+  document.querySelector('#purge-confirmation').disabled = true;
+  document.querySelector('#purge-confirm-button').disabled = true;
+  document.querySelector('#purge-confirm-button').textContent = 'Permanently Purge';
+  try {
+    const preview = await purgeApi({ action: 'preview', kind, id });
+    purgeTarget.preview = preview;
+    document.querySelector('#purge-target-label').textContent = preview.label || 'Selected record';
+    const list = document.querySelector('#purge-items');
+    for (const item of preview.items || []) {
+      const li = document.createElement('li');
+      li.textContent = item;
+      list.append(li);
+    }
+    const retainedBox = document.querySelector('#purge-retained');
+    const retainedList = document.querySelector('#purge-retained-list');
+    retainedList.replaceChildren();
+    if (preview.retained?.length) {
+      retainedBox.hidden = false;
+      for (const item of preview.retained) {
+        const li = document.createElement('li');
+        li.textContent = item;
+        retainedList.append(li);
+      }
+    }
+    document.querySelector('#purge-note').textContent = preview.note || '';
+    document.querySelector('#purge-confirmation').disabled = !preview.canPurge;
+    if (!preview.canPurge) document.querySelector('#purge-confirm-button').textContent = 'Purge Blocked';
+    updatePurgeConfirmState();
+  } catch (error) {
+    document.querySelector('#purge-target-label').textContent = 'Could not prepare purge';
+    document.querySelector('#purge-note').textContent = error.message;
+  }
+}
+
+function updatePurgeConfirmState() {
+  const input = document.querySelector('#purge-confirmation');
+  const button = document.querySelector('#purge-confirm-button');
+  button.disabled = !purgeTarget?.preview?.canPurge || input.disabled || input.value.trim().toUpperCase() !== 'PURGE';
+}
+
+async function executePurge() {
+  if (!purgeTarget?.preview?.canPurge) return;
+  const confirmation = document.querySelector('#purge-confirmation').value.trim().toUpperCase();
+  if (confirmation !== 'PURGE') return;
+  const button = document.querySelector('#purge-confirm-button');
+  button.disabled = true;
+  button.textContent = 'Purging…';
+  try {
+    const { kind, id, source } = purgeTarget;
+    await purgeApi({ action: 'purge', kind, id, confirmation });
+    if (kind === 'customer' && source?.key) localStorage.removeItem(notesKey(source));
+    closePurgeModal();
+    closeDrawer();
+    attentionOnly = false;
+    await refreshData();
+    appMessage.textContent = 'Purge complete.';
+  } catch (error) {
+    document.querySelector('#purge-note').textContent = error.message;
+    button.textContent = error.code === 'retention_required' ? 'Purge Blocked' : 'Permanently Purge';
+    updatePurgeConfirmState();
+  }
+}
+
+function closePurgeModal() {
+  purgeModal.hidden = true;
+  purgeTarget = null;
+}
+
 async function publishRelease(event) {
   event.preventDefault();
   const message = document.querySelector('#release-message');
@@ -561,6 +871,14 @@ function exportCsv() {
   URL.revokeObjectURL(link.href);
 }
 
+function makeMiniButton(text, handler, extraClass = '') {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = `mini-button ${extraClass}`.trim();
+  button.textContent = text;
+  button.addEventListener('click', handler);
+  return button;
+}
 function findCustomer(key) { return customers.find((customer) => customer.key === key); }
 function customerForLicense(license) { return customers.find((customer) => customer.licenses.some((item) => item.id === license.id)); }
 function paymentText(license) { return license.payment_amount == null ? String(license.payment_method || 'manual').toUpperCase() : `${license.payment_currency || ''} ${license.payment_amount}`.trim(); }
@@ -570,4 +888,6 @@ function shortDate(value) { return value ? new Date(value).toLocaleDateString(un
 function shortUuid(value) { const text = String(value || ''); return text.length > 16 ? `${text.slice(0,8)}…${text.slice(-4)}` : text || '—'; }
 function shortReceipt(value) { const text = String(value || ''); return text.length > 20 ? `${text.slice(0,10)}…${text.slice(-6)}` : text || '—'; }
 function humanize(value) { return String(value || '').replaceAll('_',' ').replace(/\b\w/g, (char) => char.toUpperCase()); }
+function dateValue(value) { const time = value ? new Date(value).getTime() : 0; return Number.isFinite(time) ? time : 0; }
+function maxDate(values) { const best = values.map((value) => ({ value, time: dateValue(value) })).sort((a, b) => b.time - a.time)[0]; return best?.value || null; }
 function escapeHtml(value) { const div = document.createElement('div'); div.textContent = String(value ?? ''); return div.innerHTML; }
