@@ -20,14 +20,6 @@ if (!config?.supabaseUrl || !config?.supabaseAnonKey || !config?.adminFunctionUr
       await loadData();
       decorateSalesTable();
     });
-
-    const appMessage = document.querySelector('#app-message');
-    if (appMessage) {
-      const messageObserver = new MutationObserver(() => {
-        if ((appMessage.textContent || '').trim() === 'Purge complete.') location.reload();
-      });
-      messageObserver.observe(appMessage, { childList: true, characterData: true, subtree: true });
-    }
   }
 
   async function authToken() {
@@ -96,7 +88,7 @@ if (!config?.supabaseUrl || !config?.supabaseAnonKey || !config?.adminFunctionUr
           button.title = 'Owner-only permanent purge of this Cache Compass internal sale record';
           button.addEventListener('click', (event) => {
             event.stopPropagation();
-            runSalePurge(purchase.id);
+            runSalePurge(purchase.id, row);
           });
         }
         cell.append(button);
@@ -135,7 +127,7 @@ if (!config?.supabaseUrl || !config?.supabaseAnonKey || !config?.adminFunctionUr
     return [purchase.processor_transaction_id, purchase.external_order_id, purchase.id].filter(Boolean).map(String);
   }
 
-  async function runSalePurge(purchaseId) {
+  async function runSalePurge(purchaseId, row) {
     const token = await authToken();
     if (!token) {
       alert('Your sign-in expired. Please sign in again.');
@@ -169,7 +161,11 @@ if (!config?.supabaseUrl || !config?.supabaseAnonKey || !config?.adminFunctionUr
       });
       const result = await purgeResponse.json().catch(() => ({}));
       if (!purgeResponse.ok) throw new Error(result.detail || result.error || 'Purge failed');
-      location.reload();
+
+      row?.remove();
+      await loadData();
+      const body = document.querySelector('#sales-rows');
+      if (body && !body.querySelector('tr')) body.innerHTML = '<tr><td colspan="8" class="muted">No payment records.</td></tr>';
     } catch (error) {
       alert(`Could not purge this sale: ${error.message}`);
     }
