@@ -7,10 +7,11 @@ window.CACHE_COMPASS_ADMIN_CONFIG = {
   deleteLicenseFunctionUrl: 'https://glamoujtjfczrpkrpbmp.supabase.co/functions/v1/admin-delete-license',
   purgeFunctionUrl: 'https://glamoujtjfczrpkrpbmp.supabase.co/functions/v1/admin-purge',
   entitlementFunctionUrl: 'https://glamoujtjfczrpkrpbmp.supabase.co/functions/v1/admin-entitlements',
+  influencerFunctionUrl: 'https://glamoujtjfczrpkrpbmp.supabase.co/functions/v1/admin-influencers',
 };
 
 window.addEventListener('load', () => {
-  for (const src of ['operations.js', 'capacity-approvals.js', 'issue-guard.js', 'release-upload.js?v=20260905-2', 'manual-issue-fix.js', 'purge-feedback.js']) {
+  for (const src of ['operations.js', 'capacity-approvals.js', 'issue-guard.js', 'release-upload.js?v=20260905-2', 'manual-issue-fix.js', 'purge-feedback.js', 'influencers.js?v=20260909-1']) {
     const module = document.createElement('script');
     module.type = 'module';
     module.src = src;
