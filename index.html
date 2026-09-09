@@ -45,6 +45,20 @@
       </div>
     </section>
 
+    <section class="section section-deep" id="beetle-commercial" aria-label="Cache Compass commercial by Beetle Wilder" hidden>
+      <div class="shell">
+        <div class="section-heading centered narrow">
+          <p class="eyebrow">CACHE COMPASS COMMERCIAL</p>
+          <h2>See Cache Compass in action.</h2>
+        </div>
+        <video id="beetle-commercial-video" controls playsinline preload="metadata" style="display:block;width:min(100%,960px);height:auto;margin:28px auto 14px;border:1px solid rgba(199,155,76,.28);border-radius:18px;background:#030607;box-shadow:0 24px 70px rgba(0,0,0,.35);">
+          <source src="/assets/cache-compass-beetle-wilder.mp4" type="video/mp4" />
+          Your browser does not support HTML5 video.
+        </video>
+        <p class="pricing-note" style="text-align:center;"><strong>Ad by Beetle Wilder</strong> · Wilder Productions</p>
+      </div>
+    </section>
+
     <section class="section shell" id="features">
       <div class="section-heading inventory-intro">
         <h2>You’re not a hoarder, you just have landmark blindness.</h2>
@@ -172,5 +186,13 @@
 
   <footer class="footer"><div class="shell footer-grid"><div><strong>CACHE COMPASS</strong><p>Second Life inventory management.</p><a class="footer-email" href="mailto:support@slcachecompass.com">support@slcachecompass.com</a></div><div class="footer-links"><a href="#features">Features</a><a href="#privacy">Privacy</a><a href="#pricing">Pricing</a><a href="#faq">FAQ</a><a href="#contact">Contact</a><a href="/terms.html">Terms</a><a href="/privacy-policy.html">Privacy Policy</a><a href="/refund-policy.html">Refund Policy</a><a href="#top">Back to top</a></div></div><div class="shell legal">© 2026 Cache Compass. All rights reserved. Second Life is a trademark of Linden Research, Inc. Cache Compass is not affiliated with or endorsed by Linden Lab or the Firestorm Viewer project.</div></footer>
   <script src="script.js?v=20260831-1"></script>
+  <script>
+    (() => {
+      const section = document.getElementById('beetle-commercial');
+      const video = document.getElementById('beetle-commercial-video');
+      if (!section || !video) return;
+      video.addEventListener('loadedmetadata', () => { section.hidden = false; }, { once: true });
+    })();
+  </script>
 </body>
 </html>
