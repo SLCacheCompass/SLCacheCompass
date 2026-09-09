@@ -22,6 +22,18 @@ if (heroTitle && bossCta) {
   bossCta.style.margin = '24px auto 30px';
 }
 
+// Reveal the Beetle Wilder commercial only after the web video asset actually loads.
+const beetleSection = document.querySelector('#beetle-commercial');
+const beetleVideo = document.querySelector('#beetle-commercial-video');
+if (beetleSection && beetleVideo) {
+  const revealCommercial = () => { beetleSection.hidden = false; };
+  if (beetleVideo.readyState >= 1) {
+    revealCommercial();
+  } else {
+    beetleVideo.addEventListener('loadedmetadata', revealCommercial, { once: true });
+  }
+}
+
 // Make the footer's Back to top control reliable even when the URL already contains #top.
 const backToTop = document.querySelector('.footer-links a[href="#top"]');
 if (backToTop) {
