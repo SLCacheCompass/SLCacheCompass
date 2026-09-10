@@ -64,7 +64,7 @@ document.querySelectorAll('#faq details').forEach(detail => {
   }
 });
 
-// Add recovery and additional-avatar FAQs without disturbing the existing FAQ markup.
+// Add recovery, additional-avatar and trust FAQs without disturbing the existing FAQ markup.
 const faqList = document.querySelector('#faq .faq-list');
 const addFaq = (question, answer) => {
   if (!faqList) return;
@@ -94,6 +94,21 @@ addFaq(
 addFaq(
   'What if I need more Alt spots?',
   'You can add more Alt spots through the Cache Compass kiosk at any time, up to a total of 30 active Avatars. Your existing registered Avatars stay exactly as they are and the additional capacity is added to your existing license. If you need more than 30, contact Cache Compass support.'
+);
+
+addFaq(
+  'Does Cache Compass have remote access to my computer?',
+  'No. Cache Compass runs on your Windows computer. It does not give Cache Compass staff remote control of or remote access to your computer. It may communicate with Cache Compass services when needed for licensing, activation and security.'
+);
+
+addFaq(
+  'Does Cache Compass permanently change or delete my inventory?',
+  'Cache Compass does not permanently delete inventory. When you approve an item for cleanup, it moves from its current location into your Second Life Trash during the current Firestorm session. You review your Trash yourself and decide what, if anything, gets permanently deleted.'
+);
+
+addFaq(
+  'What information is sent to Cache Compass services?',
+  'Inventory search and review use locally available Firestorm data. Cache Compass may send limited information needed to operate and secure licensing, such as avatar UUID or name, license and activation information and related technical or security events. Your Second Life password is not required or read.'
 );
 
 // Make the self-service 30-avatar limit clear near pricing.
