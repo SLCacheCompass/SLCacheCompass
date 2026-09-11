@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Marketplace Download | Cache Compass</title>
+<meta name="robots" content="noindex,nofollow,noarchive">
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="overrides.css">
+<style>
+main{max-width:980px;margin:46px auto 90px;padding:0 24px}
+.market-card{position:relative;overflow:hidden;border:1px solid rgba(199,155,76,.34);border-radius:24px;background:linear-gradient(145deg,#0b1213 0%,#081011 55%,#0a1011 100%);padding:48px 46px 42px;box-shadow:0 34px 100px rgba(0,0,0,.42),inset 0 1px 0 rgba(255,255,255,.018)}
+.market-card:before{content:"";position:absolute;inset:0 0 auto 0;height:1px;background:linear-gradient(90deg,transparent,rgba(226,189,118,.72),transparent)}
+.market-card:after{content:"";position:absolute;width:420px;height:420px;right:-220px;top:-230px;border-radius:50%;background:radial-gradient(circle,rgba(45,181,181,.09),transparent 68%);pointer-events:none}
+.eyebrow{margin:0 0 14px;color:#d5ad61;font-size:11px;font-weight:850;letter-spacing:.13em;text-transform:uppercase}
+h1{margin:0;font-size:clamp(40px,5.2vw,58px);line-height:1.01;letter-spacing:-.035em}
+.hero-subtitle{margin:18px 0 0;color:#aeb6b2;line-height:1.65;font-size:18px;max-width:720px}
+.access-panel{margin-top:32px;padding:25px;border:1px solid rgba(102,212,206,.16);border-radius:16px;background:linear-gradient(180deg,rgba(6,13,14,.88),rgba(5,10,11,.72));box-shadow:inset 0 1px 0 rgba(255,255,255,.018)}
+.access-label{margin:0 0 8px;color:#d8ddd9;font-size:11px;font-weight:850;letter-spacing:.11em;text-transform:uppercase}
+.access-copy{margin:0 0 20px;color:#8f9995;line-height:1.65;font-size:14px;max-width:720px}
+#download.button{min-height:52px;padding:0 24px;border-radius:11px;box-shadow:0 14px 32px rgba(18,103,104,.2);letter-spacing:.1em}
+.trust-line{display:flex;flex-wrap:wrap;gap:8px 20px;margin:15px 0 0;color:#798480;font-size:12px}.trust-line span:before{content:"•";margin-right:7px;color:#d5ad61}
+.message{min-height:24px;margin:16px 0 0;color:#d5ad61;line-height:1.55}.download-meta{color:#8f9995;line-height:1.65;font-size:14px;word-break:break-word}.download-meta .button{margin-top:6px}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px}.sub-card{border:1px solid rgba(199,155,76,.17);border-radius:15px;padding:21px 22px;background:rgba(7,13,14,.58)}.sub-card .kicker{margin:0 0 7px;color:#d5ad61;font-size:10px;font-weight:850;letter-spacing:.13em;text-transform:uppercase}.sub-card h2{margin:0 0 8px;font-size:18px}.sub-card p{margin:0;color:#909a96;line-height:1.6;font-size:14px}
+.support-line{display:flex;justify-content:space-between;gap:18px;align-items:center;margin-top:18px;padding-top:17px;border-top:1px solid rgba(199,155,76,.13);color:#76817d;font-size:12px}.support-line a{color:#c9cfcb;text-decoration:none}.support-line a:hover{color:#fff}
+@media(max-width:720px){.info-grid{grid-template-columns:1fr}.support-line{align-items:flex-start;flex-direction:column;gap:6px}}
+@media(max-width:600px){main{margin:22px auto 60px;padding:0 14px}.market-card{padding:30px 20px 24px;border-radius:18px}.hero-subtitle{font-size:16px}.access-panel{padding:18px}#download.button{width:100%}}
+</style>
+</head>
+<body>
+<main>
+<section class="market-card">
+  <p class="eyebrow">SECOND LIFE MARKETPLACE PURCHASE</p>
+  <h1>Download Cache Compass</h1>
+  <p class="hero-subtitle">Marketplace customers do not need to enter a license key here. Download the current Windows installer, then open Cache Compass while logged into Firestorm with a licensed avatar.</p>
+
+  <div class="access-panel">
+    <p class="access-label">Marketplace download</p>
+    <p class="access-copy">This page provides the installer only. Your Marketplace purchase is what creates your Cache Compass entitlement; downloading the installer by itself does not activate the software.</p>
+    <button id="download" class="button button-primary" type="button">Prepare Download</button>
+    <div class="trust-line">
+      <span>Same current Cache Compass installer</span>
+      <span>Temporary download link</span>
+      <span>No license key required on this page</span>
+    </div>
+    <p id="message" class="message" role="status"></p>
+    <div id="meta" class="download-meta"></div>
+  </div>
+
+  <div class="info-grid">
+    <section class="sub-card">
+      <p class="kicker">Activation</p>
+      <h2>Your avatar is the entitlement.</h2>
+      <p>After installation, log into Firestorm with the avatar associated with your Marketplace purchase and open Cache Compass. Unlicensed avatars cannot activate the software.</p>
+    </section>
+    <section class="sub-card">
+      <p class="kicker">Windows installation note</p>
+      <h2>Windows may show a security warning.</h2>
+      <p>The current release may display an Unknown Publisher or SmartScreen warning during installation. This does not change the licensing requirement.</p>
+    </section>
+  </div>
+
+  <div class="support-line">
+    <span>Need help? <a href="mailto:support@slcachecompass.com">support@slcachecompass.com</a></span>
+    <span>Cache Compass never asks for your Second Life password or MFA code.</span>
+  </div>
+</section>
+</main>
+<script>
+const endpoint='https://glamoujtjfczrpkrpbmp.supabase.co/functions/v1/marketplace-download';
+const button=document.querySelector('#download');
+const message=document.querySelector('#message');
+const meta=document.querySelector('#meta');
+button.addEventListener('click',async()=>{
+  button.disabled=true; message.textContent='Preparing your download…'; meta.textContent='';
+  try{
+    const response=await fetch(endpoint,{method:'POST',headers:{'content-type':'application/json'},body:'{}'});
+    const body=await response.json().catch(()=>({}));
+    if(!response.ok){message.textContent='The download could not be prepared. Please try again in a moment.';return;}
+    message.textContent=`Cache Compass ${body.version} is ready. The download link expires in 10 minutes.`;
+    meta.textContent=`SHA-256: ${body.sha256}`;
+    const link=document.createElement('a');
+    link.className='button button-primary';
+    link.href=body.url;
+    link.textContent='Download CacheCompass-Setup.exe';
+    link.rel='noopener';
+    meta.append(document.createElement('br'),document.createElement('br'),link);
+  }catch{
+    message.textContent='The download service could not be reached. Please try again.';
+  }finally{button.disabled=false;}
+});
+</script>
+</body>
+</html>
