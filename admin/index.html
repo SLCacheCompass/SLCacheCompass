@@ -29,8 +29,23 @@
     .purge-confirm-label{margin-top:16px}
     .purge-confirm-label strong{color:var(--danger)}
     .purge-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
-    @media(max-width:900px){.filterbar.customer-filterbar,.filterbar.license-filterbar{grid-template-columns:1fr 1fr}.filterbar.customer-filterbar .button,.filterbar.license-filterbar .button{grid-column:auto}}
-    @media(max-width:620px){.filterbar.customer-filterbar,.filterbar.license-filterbar{grid-template-columns:1fr}.filterbar.customer-filterbar .button,.filterbar.license-filterbar .button{grid-column:auto}.row-actions{display:flex;gap:4px}.row-actions .mini-button+.mini-button{margin-left:0}.drawer-actions{flex-wrap:wrap;justify-content:flex-start}}
+    .accounting-metrics{grid-template-columns:repeat(4,minmax(0,1fr))}
+    .expense-form-panel{margin-bottom:12px}
+    .expense-form{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;align-items:end}
+    .expense-form .wide{grid-column:span 2}
+    .expense-form .full{grid-column:1/-1}
+    .expense-form-actions{display:flex;justify-content:flex-end;gap:8px;align-items:center}
+    .expense-check{flex-direction:row;align-items:center;gap:8px;min-height:35px;padding-top:15px}
+    .expense-check input{width:auto;min-height:0}
+    .expense-filterbar{grid-template-columns:minmax(260px,1fr) 220px 130px auto}
+    .expense-filter-check{display:flex;align-items:center;gap:7px;color:var(--muted);font-size:11px;white-space:nowrap}
+    .expense-filter-check input{width:auto;min-height:0}
+    .data-table tbody tr.expense-voided{opacity:.58;background:rgba(220,119,119,.035)}
+    .expense-void-label{display:inline-flex;margin-left:5px;border:1px solid rgba(220,119,119,.5);border-radius:999px;padding:2px 7px;color:var(--danger);font-size:8px;font-weight:850;letter-spacing:.09em;text-transform:uppercase}
+    .expense-error{color:var(--danger)!important}
+    @media(max-width:900px){.filterbar.customer-filterbar,.filterbar.license-filterbar{grid-template-columns:1fr 1fr}.filterbar.customer-filterbar .button,.filterbar.license-filterbar .button{grid-column:auto}.expense-form{grid-template-columns:repeat(2,minmax(0,1fr))}.expense-form .full{grid-column:1/-1}.expense-filterbar{grid-template-columns:1fr 1fr}}
+    @media(max-width:760px){.accounting-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    @media(max-width:620px){.filterbar.customer-filterbar,.filterbar.license-filterbar{grid-template-columns:1fr}.filterbar.customer-filterbar .button,.filterbar.license-filterbar .button{grid-column:auto}.row-actions{display:flex;gap:4px}.row-actions .mini-button+.mini-button{margin-left:0}.drawer-actions{flex-wrap:wrap;justify-content:flex-start}.expense-form,.expense-filterbar{grid-template-columns:1fr}.expense-form .wide,.expense-form .full{grid-column:auto}.expense-form-actions{justify-content:flex-start;flex-wrap:wrap}.expense-filter-check{min-height:35px}}
   </style>
 </head>
 <body>
@@ -69,6 +84,7 @@
         <button class="tab" data-view="customers">Customers</button>
         <button class="tab" data-view="licenses">Licenses</button>
         <button class="tab" data-view="sales">Sales</button>
+        <button class="tab" data-view="accounting">Accounting</button>
         <button class="tab" data-view="releases">Releases</button>
         <button class="tab" data-view="support">Support</button>
       </nav>
@@ -177,6 +193,62 @@
         </div>
       </section>
 
+      <section id="view-accounting" class="view">
+        <div class="view-heading split">
+          <div><p class="eyebrow">ACCOUNTING</p><h2>Expense Tracker</h2><p class="muted">Track business expenses without mixing them into customer payment records.</p></div>
+          <div class="inline-actions"><button id="expense-export" class="button quiet" type="button">Export CSV</button></div>
+        </div>
+
+        <div class="metric-grid accounting-metrics">
+          <div class="metric" style="cursor:default"><span>This month</span><strong id="expense-metric-month">$0.00</strong></div>
+          <div class="metric" style="cursor:default"><span>Year to date</span><strong id="expense-metric-ytd">$0.00</strong></div>
+          <div class="metric" style="cursor:default"><span>All time USD</span><strong id="expense-metric-all">$0.00</strong></div>
+          <div class="metric" style="cursor:default"><span>Unconverted L$</span><strong id="expense-metric-linden">L$0</strong></div>
+        </div>
+
+        <section class="panel expense-form-panel">
+          <div class="section-title"><div><p class="eyebrow">NEW EXPENSE</p><h3>Add to the ledger</h3></div></div>
+          <form id="expense-form" class="expense-form">
+            <label>Date<input id="expense-date" type="date" required></label>
+            <label>Vendor / Payee<input id="expense-vendor" required placeholder="Adobe, Supabase, Wilder Productions…"></label>
+            <label>Category<select id="expense-category">
+              <option>Advertising / Marketing</option>
+              <option selected>Software / Subscriptions</option>
+              <option>Hosting / Infrastructure</option>
+              <option>Contractors / Creative</option>
+              <option>Second Life / Marketplace Fees</option>
+              <option>Payment / Processing Fees</option>
+              <option>Legal / Accounting</option>
+              <option>Equipment</option>
+              <option>Office</option>
+              <option>Travel</option>
+              <option>Other</option>
+            </select></label>
+            <label>Amount<input id="expense-amount" type="number" min="0.01" step="0.01" required placeholder="0.00"></label>
+            <label>Currency<select id="expense-currency"><option value="USD">USD</option><option value="L$">L$</option></select></label>
+            <label>USD accounting value<input id="expense-usd-value" type="number" min="0" step="0.01" placeholder="For L$ conversion"></label>
+            <label>Payment method<input id="expense-payment-method" placeholder="Card, PayPal, L$…"></label>
+            <label>Receipt / Reference<input id="expense-receipt" placeholder="Receipt, invoice, transaction ID"></label>
+            <label class="wide">Description<input id="expense-description" placeholder="What was this expense for?"></label>
+            <label class="expense-check"><input id="expense-deductible" type="checkbox" checked><span>Tax deductible</span></label>
+            <label class="full">Notes<textarea id="expense-notes" rows="3" placeholder="Optional accounting notes"></textarea></label>
+            <div class="expense-form-actions full"><button id="expense-cancel" class="button quiet" type="button" hidden>Cancel Edit</button><button id="expense-save" class="button gold" type="submit">Add Expense</button></div>
+          </form>
+          <p id="accounting-message" class="message" role="status"></p>
+        </section>
+
+        <div class="filterbar expense-filterbar">
+          <input id="expense-search" type="search" placeholder="Search vendor, description, receipt, notes…">
+          <select id="expense-category-filter" aria-label="Expense category"><option value="">All categories</option></select>
+          <select id="expense-year-filter" aria-label="Expense year"><option value="">All years</option></select>
+          <label class="expense-filter-check"><input id="expense-include-voided" type="checkbox">Include voided</label>
+        </div>
+        <div class="table-shell">
+          <table class="data-table"><thead><tr><th>Date</th><th>Vendor</th><th>Category</th><th>Amount</th><th>USD Value</th><th>Method</th><th>Receipt</th><th>Deductible</th><th>Actions</th></tr></thead><tbody id="expense-rows"></tbody></table>
+        </div>
+        <p id="expense-count" class="table-count"></p>
+      </section>
+
       <section id="view-releases" class="view">
         <div class="view-heading"><div><p class="eyebrow">CUSTOMER DOWNLOAD</p><h2>Publish a release</h2><p class="muted">The installer stays private. Publishing makes it the active licensed download.</p></div></div>
         <section class="panel release-panel">
@@ -249,5 +321,6 @@
   <script src="config.js"></script>
   <script type="module" src="app.js"></script>
   <script type="module" src="dashboard-totals.js"></script>
+  <script type="module" src="accounting.js"></script>
 </body>
 </html>
