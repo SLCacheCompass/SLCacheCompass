@@ -7,7 +7,7 @@ const accountingTab = document.querySelector('.tab[data-view="accounting"]');
 if (!config || !accountingView || !accountingTab) {
   // Accounting UI is optional; leave the rest of Back Office untouched if it is absent.
 } else {
-  const supabase = createClient(config.supabaseUrl, config.supabaseAnonKey);
+  const supabase = createClient(config.supabaseUrl, config.supabaseAnonKey, { auth: { detectSessionInUrl: false } });
   let expenses = [];
   let editingId = null;
   let loadedOnce = false;
@@ -122,7 +122,8 @@ if (!config || !accountingView || !accountingTab) {
       updated_by: sessionData.session.user.id,
     };
 
-    setMessage(editingId ? 'Updating expense…' : 'Saving expense…');
+    const wasEditing = Boolean(editingId);
+    setMessage(wasEditing ? 'Updating expense…' : 'Saving expense…');
     let result;
     if (editingId) {
       result = await supabase.from('accounting_expenses').update(payload).eq('id', editingId).select().single();
@@ -137,7 +138,7 @@ if (!config || !accountingView || !accountingTab) {
 
     resetForm();
     await loadExpenses();
-    setMessage(editingId ? 'Expense updated.' : 'Expense saved.');
+    setMessage(wasEditing ? 'Expense updated.' : 'Expense saved.');
   }
 
   function editExpense(expense) {
