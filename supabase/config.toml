@@ -1,0 +1,2 @@
+[functions.avatar-name-resolver]
+verify_jwt = false
