@@ -93,17 +93,13 @@ if (config && drawer && actions) {
       form.elements.email.value = preview.customer?.email || identity.email || '';
       form.elements.avatarName.value = preview.customer?.primary_avatar_name || identity.name || '';
       form.elements.avatarUuid.value = preview.customer?.primary_avatar_uuid || (isUuid(identity.uuid) ? identity.uuid : '');
-      const firstPurchase = purchases[0];
-      if (['website_usd','second_life_marketplace','manual','promo'].includes(firstPurchase.channel)) form.elements.channel.value = firstPurchase.channel;
-      form.elements.tier.value = String(firstPurchase.license_tier || licenses[0]?.tier || 3);
       form.elements.reason.value = 'Back Office rebuild/reissue';
       form.elements.confirmation.value = '';
-      syncLicenseToPurchase();
+      prefillFromPurchase(purchases[0], licenses);
       message.textContent = 'Review the retained purchase information, make any corrections, then type REBUILD.';
       purchaseSelect.onchange = () => { prefillFromPurchase(preview.purchases.find(p => p.id === purchaseSelect.value), preview.licenses); };
     } catch (error) {
       message.textContent = error?.message || 'Could not prepare the rebuild.';
-      if (!modal.hidden && !currentCustomerId) setTimeout(close, 1200);
     } finally {
       button.disabled = false;
     }
@@ -118,13 +114,6 @@ if (config && drawer && actions) {
     if (purchase.purchaser_avatar_uuid) form.elements.avatarUuid.value = purchase.purchaser_avatar_uuid;
     const linked = licenses.find(l => l.id === purchase.license_id || l.purchase_id === purchase.id);
     if (linked) form.elements.oldLicenseId.value = linked.id;
-  }
-
-  function syncLicenseToPurchase() {
-    const purchaseId = form.elements.purchaseId.value;
-    const opts = [...form.elements.oldLicenseId.options];
-    const match = opts.find(o => o.dataset.purchaseId === purchaseId);
-    if (match) form.elements.oldLicenseId.value = match.value;
   }
 
   async function rebuild(event) {
