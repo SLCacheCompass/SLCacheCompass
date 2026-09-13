@@ -6,7 +6,7 @@
 <title>Recover Cache Compass License</title>
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <style>
-body{margin:0;background:#05090a;color:#d8dedb;font:16px/1.55 Arial,sans-serif}main{max-width:760px;margin:50px auto;padding:0 22px}.card{background:#0a1011;border:1px solid #5e4a27;border-radius:16px;padding:28px}h1,h2{color:#f4efe4}.gold,a{color:#d5ad61}label{display:block;margin:14px 0}input,button{font:inherit}.email{width:100%;box-sizing:border-box;padding:12px;background:#081013;color:#f4efe4;border:1px solid #425055;border-radius:8px}.button{display:inline-block;padding:12px 18px;border:1px solid #d5ad61;border-radius:8px;background:#17140e;color:#f4efe4;font-weight:700;cursor:pointer;text-decoration:none}.button:disabled{opacity:.45}.message{min-height:24px;color:#d5ad61}.orders{display:grid;gap:12px;margin-top:20px}.order{padding:16px;border:1px solid #344246;border-radius:10px;background:#071011}.order p{margin:4px 0;color:#aeb6b2}.order strong{color:#f4efe4}.muted{color:#87928d;font-size:13px}.toplink{display:inline-block;margin-bottom:15px;color:#c9cfcb;text-decoration:none}.toplink:hover{color:#fff}
+body{margin:0;background:#05090a;color:#d8dedb;font:16px/1.55 Arial,sans-serif}main{max-width:760px;margin:50px auto;padding:0 22px}.card{background:#0a1011;border:1px solid #5e4a27;border-radius:16px;padding:28px}h1{color:#f4efe4}.gold,a{color:#d5ad61}.button{display:inline-block;margin-top:12px;padding:12px 18px;border:1px solid #d5ad61;border-radius:8px;background:#17140e;color:#f4efe4;font-weight:700;text-decoration:none}.muted{color:#87928d;font-size:13px}.toplink{display:inline-block;margin-bottom:15px;color:#c9cfcb;text-decoration:none}.toplink:hover{color:#fff}
 </style>
 </head>
 <body>
@@ -14,29 +14,11 @@ body{margin:0;background:#05090a;color:#d8dedb;font:16px/1.55 Arial,sans-serif}m
 <a class="toplink" href="/download.html">← Back to Download</a>
 <div class="card">
 <p class="gold"><strong>CACHE COMPASS</strong></p>
-<h1>Recover your license</h1>
-<p>Use the same email address you used for your Cache Compass website purchase. We’ll send a secure sign-in link first, then you can resend your license email.</p>
-<div id="signin-panel">
-<label>Purchase email<input id="email" class="email" type="email" autocomplete="email" placeholder="you@example.com"></label>
-<button id="signin" class="button" type="button">Email secure sign-in link</button>
-</div>
-<p id="message" class="message" role="status"></p>
-<div id="account" hidden>
-<h2>Your website purchases</h2>
-<p class="muted">For security, the license number is sent only to the verified purchase email.</p>
-<div id="orders" class="orders"></div>
-</div>
+<h1>Need your license number?</h1>
+<p>Visit the Cache Compass in-world Mainstore and use the <strong>License Lookup</strong> kiosk. It can look up the license connected to the avatar you are logged in with.</p>
+<p class="muted">For your security, we do not provide license lookup on the website using avatar UUIDs.</p>
+<a class="button" href="http://maps.secondlife.com/secondlife/Sciliar/40/221/2001" target="_blank" rel="noopener">Visit the Cache Compass Mainstore</a>
 </div>
 </main>
-<script type="module">
-import{createClient}from'https://esm.sh/@supabase/supabase-js@2.57.4';
-const BASE='https://glamoujtjfczrpkrpbmp.supabase.co',KEY='sb_publishable_Mm_pNT0-ETEpKIF3Ezm2iw_DGx273vf',EMAIL_FN=BASE+'/functions/v1/license-email';
-const sb=createClient(BASE,KEY),email=document.getElementById('email'),signin=document.getElementById('signin'),signinPanel=document.getElementById('signin-panel'),message=document.getElementById('message'),account=document.getElementById('account'),ordersEl=document.getElementById('orders');
-const fmt=v=>v?new Date(v).toLocaleString():'';
-async function getSession(){return(await sb.auth.getSession()).data.session}
-signin.onclick=async()=>{const e=email.value.trim();if(!e){message.textContent='Enter the email you used to purchase Cache Compass.';return}signin.disabled=true;const{error}=await sb.auth.signInWithOtp({email:e,options:{emailRedirectTo:location.origin+'/license-recovery.html'}});signin.disabled=false;message.textContent=error?'Could not send sign-in link: '+error.message:'Check your email for the secure sign-in link.'};
-async function load(){const s=await getSession();if(!s){signinPanel.hidden=false;account.hidden=true;return}signinPanel.hidden=true;account.hidden=false;message.textContent='Signed in as '+(s.user.email||'verified customer')+'.';const r=await fetch(EMAIL_FN,{method:'POST',headers:{authorization:'Bearer '+s.access_token,'content-type':'application/json'},body:JSON.stringify({action:'list'})});const b=await r.json().catch(()=>({}));if(!r.ok){message.textContent='Could not load purchases. Contact support if this continues.';return}ordersEl.innerHTML='';if(!b.orders?.length){ordersEl.innerHTML='<p>No completed website purchases were found for this email.</p>';return}for(const o of b.orders){const div=document.createElement('div');div.className='order';const label=o.purchaser_avatar_name||'Cache Compass purchase';div.innerHTML='<p><strong>'+label.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))+'</strong></p><p>'+o.slots+' avatar slots · Purchased '+fmt(o.paid_at||o.created_at)+'</p><p>Email status: '+String(o.license_email_status||'pending').replaceAll('_',' ')+'</p><button class="button" type="button">Email my license</button><p class="muted status"></p>';const btn=div.querySelector('button'),status=div.querySelector('.status');btn.onclick=async()=>{btn.disabled=true;status.textContent='Sending…';const rr=await fetch(EMAIL_FN,{method:'POST',headers:{authorization:'Bearer '+s.access_token,'content-type':'application/json'},body:JSON.stringify({action:'send',orderId:o.id})});const bb=await rr.json().catch(()=>({}));btn.disabled=false;if(rr.ok){status.textContent='Sent. Check your inbox and spam/junk folder.'}else if(bb.error==='please_wait_before_resending'){status.textContent='Please wait about a minute before sending again.'}else if(bb.error==='email_provider_not_configured'){status.textContent='Email delivery is temporarily unavailable. Contact support@slcachecompass.com.'}else{status.textContent='Could not send the email. Contact support@slcachecompass.com.'}};ordersEl.appendChild(div)}}
-await load();
-</script>
 </body>
 </html>
