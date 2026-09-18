@@ -36,12 +36,15 @@ h1{margin:0;font-size:clamp(40px,5.2vw,58px);line-height:1.01;letter-spacing:-.0
 
   <div class="access-panel">
     <p class="access-label">Marketplace download</p>
-    <p class="access-copy">This page provides the installer only. Your Marketplace purchase is what creates your Cache Compass entitlement; downloading the installer by itself does not activate the software.</p>
-    <button id="download" class="button button-primary" type="button">Prepare Download</button>
+    <p class="access-copy">Use the order or transaction number shown in Second Life Marketplace purchase history. The resulting installer carries a signed activation receipt bound to the avatar that received this purchase.</p>
+    <label class="order-label">Marketplace order or transaction number
+      <input id="order-number" autocomplete="off" inputmode="numeric" spellcheck="false" placeholder="Example: 1668911231">
+    </label>
+    <button id="download" class="button button-primary" type="button">Prepare Secure Download</button>
     <div class="trust-line">
-      <span>Same current Cache Compass installer</span>
+      <span>Signed purchase-specific activation receipt</span>
       <span>Temporary download link</span>
-      <span>No license key required on this page</span>
+      <span>No Mainstore visit required</span>
     </div>
     <p id="message" class="message" role="status"></p>
     <div id="meta" class="download-meta"></div>
