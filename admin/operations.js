@@ -377,6 +377,7 @@ if (!config?.supabaseUrl || !config?.supabaseAnonKey || !config?.adminFunctionUr
     salesObserver.observe(rows, { childList: true });
 
     document.querySelector('[data-view="sales"]')?.addEventListener('click', () => setTimeout(renderSales, 0));
+    window.addEventListener('cachecompass:sales-view', () => setTimeout(renderSales, 0));
   }
 
   function allSalesRows() {
