@@ -324,6 +324,16 @@ if (!config?.supabaseUrl || !config?.supabaseAnonKey || !config?.adminFunctionUr
     document.head.append(style);
   }
 
+  function syncSharedSalesData() {
+    const shared = window.CACHE_COMPASS_ADMIN_LICENSES;
+    if (Array.isArray(shared)) setLicenseData(shared);
+  }
+
+  function renderSalesFromSharedData() {
+    syncSharedSalesData();
+    renderSales();
+  }
+
   function installSalesUi() {
     installSalesStyles();
     const view = document.querySelector('#view-sales');
@@ -362,11 +372,11 @@ if (!config?.supabaseUrl || !config?.supabaseAnonKey || !config?.adminFunctionUr
     table.querySelector('thead').innerHTML = '<tr><th data-sales-sort="customer">Customer</th><th data-sales-sort="type">Type</th><th data-sales-sort="source">Source</th><th data-sales-sort="gross">Gross</th><th data-sales-sort="capacity">Product</th><th data-sales-sort="receipt">Receipt</th><th data-sales-sort="date">Date</th></tr>';
     installSalesSorting(table);
 
-    for (const control of filters.querySelectorAll('input,select')) control.addEventListener('change', renderSales);
+    for (const control of filters.querySelectorAll('input,select')) control.addEventListener('change', renderSalesFromSharedData);
     filters.querySelector('#sales-clear').addEventListener('click', () => {
       for (const input of filters.querySelectorAll('input')) input.value = '';
       for (const select of filters.querySelectorAll('select')) select.value = '';
-      renderSales();
+      renderSalesFromSharedData();
     });
     filters.querySelector('#sales-export').addEventListener('click', exportSalesCsv);
 
@@ -376,8 +386,8 @@ if (!config?.supabaseUrl || !config?.supabaseAnonKey || !config?.adminFunctionUr
     });
     salesObserver.observe(rows, { childList: true });
 
-    document.querySelector('[data-view="sales"]')?.addEventListener('click', () => setTimeout(renderSales, 0));
-    window.addEventListener('cachecompass:sales-view', () => setTimeout(renderSales, 0));
+    document.querySelector('[data-view="sales"]')?.addEventListener('click', () => setTimeout(renderSalesFromSharedData, 0));
+    window.addEventListener('cachecompass:sales-view', () => setTimeout(renderSalesFromSharedData, 0));
   }
 
   function allSalesRows() {
@@ -534,7 +544,7 @@ if (!config?.supabaseUrl || !config?.supabaseAnonKey || !config?.adminFunctionUr
           key,
           direction: salesSort.key === key && salesSort.direction === 'asc' ? 'desc' : 'asc',
         };
-        renderSales();
+        renderSalesFromSharedData();
       });
       th.append(button);
     }
