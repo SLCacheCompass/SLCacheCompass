@@ -4,7 +4,7 @@ const config = window.CACHE_COMPASS_ADMIN_CONFIG;
 if (!config?.supabaseUrl || !config?.supabaseAnonKey || !config?.adminFunctionUrl) {
   console.debug('Back Office operations module is not configured.');
 } else {
-  const supabase = createClient(config.supabaseUrl, config.supabaseAnonKey);
+  const supabase = createClient(config.supabaseUrl, config.supabaseAnonKey, { auth: { detectSessionInUrl: false } });
   let licenses = [];
   let capacityEvents = [];
   let customerGroups = [];
@@ -18,14 +18,32 @@ if (!config?.supabaseUrl || !config?.supabaseAnonKey || !config?.adminFunctionUr
     installSalesUi();
     installSearchBridges();
     installCapacityButton();
-    await loadData();
+
+    const sharedLicenses = Array.isArray(window.CACHE_COMPASS_ADMIN_LICENSES) ? window.CACHE_COMPASS_ADMIN_LICENSES : [];
+    if (sharedLicenses.length) {
+      setLicenseData(sharedLicenses);
+      if (document.querySelector('#view-sales')?.classList.contains('active')) renderSales();
+    } else {
+      await loadData();
+    }
+
+    window.addEventListener('cachecompass:licenses-loaded', (event) => {
+      const next = Array.isArray(event.detail?.licenses) ? event.detail.licenses : [];
+      setLicenseData(next);
+      if (document.querySelector('#view-sales')?.classList.contains('active')) renderSales();
+    });
 
     supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (session) await loadData();
+      if (session && !Array.isArray(window.CACHE_COMPASS_ADMIN_LICENSES)) await loadData();
     });
 
     const drawerObserver = new MutationObserver(() => installCapacityButton());
     drawerObserver.observe(document.querySelector('#customer-drawer') || document.body, { childList: true, subtree: true });
+  }
+
+  function setLicenseData(items) {
+    licenses = Array.isArray(items) ? items : [];
+    customerGroups = groupCustomers(licenses);
   }
 
   async function authToken() {
@@ -44,8 +62,7 @@ if (!config?.supabaseUrl || !config?.supabaseAnonKey || !config?.adminFunctionUr
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || 'Could not load Back Office data');
-      licenses = Array.isArray(result.licenses) ? result.licenses : [];
-      customerGroups = groupCustomers(licenses);
+      setLicenseData(Array.isArray(result.licenses) ? result.licenses : []);
     } catch (error) {
       console.debug('Operations data load failed.', error);
       return;
