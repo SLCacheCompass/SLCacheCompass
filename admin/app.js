@@ -129,6 +129,19 @@ document.querySelector('#license-attention-clear').addEventListener('click', () 
   renderLicenseTable();
 });
 
+window.addEventListener('cachecompass:open-customer', (event) => {
+  const detail = event.detail || {};
+  const customer = customers.find((entry) => {
+    if (detail.customerId && entry.customerId === detail.customerId) return true;
+    if (detail.primaryUuid && entry.primaryUuid && entry.primaryUuid.toLowerCase() === String(detail.primaryUuid).toLowerCase()) return true;
+    if (detail.email && entry.email && entry.email.toLowerCase() === String(detail.email).toLowerCase()) return true;
+    return false;
+  });
+  if (!customer) return;
+  switchView('customers');
+  openDrawer(customer, detail.licenseId || null);
+});
+
 document.querySelector('#purge-confirmation').addEventListener('input', updatePurgeConfirmState);
 document.querySelector('#purge-confirm-button').addEventListener('click', executePurge);
 
