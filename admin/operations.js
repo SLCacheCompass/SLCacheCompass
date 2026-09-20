@@ -369,7 +369,7 @@ if (!config?.supabaseUrl || !config?.supabaseAnonKey || !config?.adminFunctionUr
     const shell = view.querySelector('.table-shell');
     shell.parentElement.insertBefore(filters, shell);
     shell.parentElement.insertBefore(summary, shell);
-    table.querySelector('thead').innerHTML = '<tr><th data-sales-sort="customer">Customer</th><th data-sales-sort="type">Type</th><th data-sales-sort="source">Source</th><th data-sales-sort="gross">Gross</th><th data-sales-sort="capacity">Product</th><th data-sales-sort="receipt">Receipt</th><th data-sales-sort="date">Date</th></tr>';
+    table.querySelector('thead').innerHTML = '<tr><th data-sales-sort="customer">Customer</th><th data-sales-sort="type">Type</th><th data-sales-sort="source">Source</th><th data-sales-sort="gross">Gross</th><th data-sales-sort="product">Product</th><th data-sales-sort="receipt">Receipt</th><th data-sales-sort="date">Date</th></tr>';
     installSalesSorting(table);
 
     for (const control of filters.querySelectorAll('input,select')) control.addEventListener('change', renderSalesFromSharedData);
@@ -529,65 +529,87 @@ if (!config?.supabaseUrl || !config?.supabaseAnonKey || !config?.adminFunctionUr
   let salesSort = { key: 'date', direction: 'desc' };
 
   function installSalesSorting(table) {
-    for (const th of table.querySelectorAll('thead th[data-sales-sort]')) {
-      const key = th.dataset.salesSort;
+    const thead = table.querySelector('thead');
+    if (!thead || thead.dataset.salesSortReady === '1') return;
+    thead.dataset.salesSortReady = '1';
+
+    for (const th of thead.querySelectorAll('th[data-sales-sort]')) {
       const label = th.textContent.trim();
       th.textContent = '';
+      th.setAttribute('aria-sort', 'none');
       const button = document.createElement('button');
       button.type = 'button';
       button.className = 'column-sort';
+      button.dataset.sortKey = th.dataset.salesSort;
+      button.innerHTML = `<span class="sort-label">${escapeHtml(label)}</span><span class="sort-indicator" aria-hidden="true">↕</span>`;
       button.setAttribute('aria-label', `Sort by ${label}`);
-      button.innerHTML = `<span>${escapeHtml(label)}</span><span class="sort-indicator" aria-hidden="true">${salesSort.key === key ? (salesSort.direction === 'asc' ? '▲' : '▼') : '↕'}</span>`;
-      if (salesSort.key === key) button.classList.add('active');
-      button.addEventListener('click', () => {
-        salesSort = {
-          key,
-          direction: salesSort.key === key && salesSort.direction === 'asc' ? 'desc' : 'asc',
-        };
-        renderSalesFromSharedData();
-      });
       th.append(button);
     }
+
+    thead.addEventListener('click', (event) => {
+      const button = event.target.closest('.column-sort');
+      if (!button || !thead.contains(button)) return;
+      const key = button.dataset.sortKey;
+      const defaultDirection = ['gross', 'date'].includes(key) ? 'desc' : 'asc';
+      salesSort = {
+        key,
+        direction: salesSort.key === key
+          ? (salesSort.direction === 'asc' ? 'desc' : 'asc')
+          : defaultDirection,
+      };
+      renderSalesFromSharedData();
+    });
+
+    updateSalesSortIndicators();
+  }
+
+  function salesProductText(sale) {
+    if (sale.capacityDelta) return `+${sale.capacityDelta} Avatar Upgrade`;
+    if (sale.tier) return `${sale.tier} Avatar License`;
+    return 'License';
   }
 
   function salesComparator(a, b) {
     const direction = salesSort.direction === 'asc' ? 1 : -1;
-    const text = (value) => String(value || '').toLocaleLowerCase();
-    let left;
-    let right;
+    const text = (value) => String(value || '').trim().toLocaleLowerCase();
+    const compareText = (left, right) => left.localeCompare(right, undefined, { numeric: true, sensitivity: 'base' });
+    const compareNumber = (left, right) => left - right;
+
+    let result = 0;
     switch (salesSort.key) {
       case 'customer':
-        left = text(customerNameForGroup(a.customer, a.license));
-        right = text(customerNameForGroup(b.customer, b.license));
+        result = compareText(text(customerNameForGroup(a.customer, a.license)), text(customerNameForGroup(b.customer, b.license)));
         break;
       case 'type':
-        left = text(labelSaleType(a.type));
-        right = text(labelSaleType(b.type));
+        result = compareText(text(labelSaleType(a.type)), text(labelSaleType(b.type)));
         break;
       case 'source':
-        left = text(a.source);
-        right = text(b.source);
+        result = compareText(text(a.source), text(b.source));
         break;
-      case 'gross':
-        left = a.gross == null ? Number.NEGATIVE_INFINITY : Number(a.gross);
-        right = b.gross == null ? Number.NEGATIVE_INFINITY : Number(b.gross);
+      case 'gross': {
+        const currencyCompare = compareText(text(a.currency), text(b.currency));
+        if (currencyCompare) return currencyCompare;
+        const left = a.gross == null ? Number.NEGATIVE_INFINITY : Number(a.gross);
+        const right = b.gross == null ? Number.NEGATIVE_INFINITY : Number(b.gross);
+        result = compareNumber(left, right);
         break;
-      case 'capacity':
-        left = a.resultingCapacity || a.capacityDelta || a.tier || 0;
-        right = b.resultingCapacity || b.capacityDelta || b.tier || 0;
+      }
+      case 'product':
+        result = compareText(text(salesProductText(a)), text(salesProductText(b)));
         break;
       case 'receipt':
-        left = text(a.receipt);
-        right = text(b.receipt);
+        result = compareText(text(a.receipt), text(b.receipt));
         break;
       case 'date':
       default:
-        left = new Date(a.at || 0).getTime();
-        right = new Date(b.at || 0).getTime();
+        result = compareNumber(new Date(a.at || 0).getTime(), new Date(b.at || 0).getTime());
         break;
     }
-    if (typeof left === 'number' && typeof right === 'number') return (left - right) * direction;
-    return String(left).localeCompare(String(right), undefined, { numeric: true, sensitivity: 'base' }) * direction;
+
+    if (result === 0 && salesSort.key !== 'date') {
+      result = compareNumber(new Date(a.at || 0).getTime(), new Date(b.at || 0).getTime());
+    }
+    return result * direction;
   }
 
   function updateSalesSortIndicators() {
@@ -598,6 +620,7 @@ if (!config?.supabaseUrl || !config?.supabaseAnonKey || !config?.adminFunctionUr
       if (!button) continue;
       const active = th.dataset.salesSort === salesSort.key;
       button.classList.toggle('active', active);
+      th.setAttribute('aria-sort', active ? (salesSort.direction === 'asc' ? 'ascending' : 'descending') : 'none');
       const indicator = button.querySelector('.sort-indicator');
       if (indicator) indicator.textContent = active ? (salesSort.direction === 'asc' ? '▲' : '▼') : '↕';
     }
@@ -654,11 +677,7 @@ if (!config?.supabaseUrl || !config?.supabaseAnonKey || !config?.adminFunctionUr
     for (const sale of rows) {
       const tr = document.createElement('tr');
       const customerName = customerNameForGroup(sale.customer, sale.license);
-      const productText = sale.capacityDelta
-        ? `+${sale.capacityDelta} Avatar Upgrade`
-        : sale.tier
-          ? `${sale.tier} Avatar License`
-          : 'License';
+      const productText = salesProductText(sale);
       const statusFlag = saleStatusFlag(sale);
       tr.innerHTML = `<td class="name-cell"><button class="sales-customer-link" type="button"><strong>${escapeHtml(customerName)}</strong></button></td><td>${escapeHtml(labelSaleType(sale.type))}${statusFlag ? ` <span class="sales-flag">${escapeHtml(statusFlag)}</span>` : ''}</td><td>${escapeHtml(sale.source || '—')}</td><td>${escapeHtml(formatAmount(sale.gross, sale.currency))}</td><td>${escapeHtml(productText)}</td><td><span class="uuid-short">${escapeHtml(shortReceipt(sale.receipt))}</span></td><td>${escapeHtml(shortDate(sale.at))}</td>`;
       tr.querySelector('.sales-customer-link')?.addEventListener('click', (event) => {
