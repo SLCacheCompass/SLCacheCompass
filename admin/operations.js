@@ -306,19 +306,18 @@ if (!config?.supabaseUrl || !config?.supabaseAnonKey || !config?.adminFunctionUr
     const summary = document.createElement('div');
     summary.id = 'sales-summary';
     summary.className = 'metric-grid';
-    summary.style.gridTemplateColumns = 'repeat(5,minmax(0,1fr))';
+    summary.style.gridTemplateColumns = 'repeat(3,minmax(0,1fr))';
     summary.style.marginBottom = '12px';
     summary.innerHTML = `
       <div class="metric" style="cursor:default"><span>Gross</span><strong id="sales-gross">—</strong></div>
-      <div class="metric" style="cursor:default"><span>Fees</span><strong id="sales-fees">—</strong></div>
-      <div class="metric" style="cursor:default"><span>Net</span><strong id="sales-net">—</strong></div>
       <div class="metric" style="cursor:default"><span>This month</span><strong id="sales-month">—</strong></div>
       <div class="metric" style="cursor:default"><span>YTD</span><strong id="sales-ytd">—</strong></div>`;
 
     const shell = view.querySelector('.table-shell');
     shell.parentElement.insertBefore(filters, shell);
     shell.parentElement.insertBefore(summary, shell);
-    table.querySelector('thead').innerHTML = '<tr><th>Customer</th><th>Type</th><th>Source</th><th>Gross</th><th>Fees</th><th>Net</th><th>License / Capacity</th><th>Receipt</th><th>Date</th></tr>';
+    table.querySelector('thead').innerHTML = '<tr><th data-sales-sort="customer">Customer</th><th data-sales-sort="type">Type</th><th data-sales-sort="source">Source</th><th data-sales-sort="gross">Gross</th><th data-sales-sort="capacity">License / Capacity</th><th data-sales-sort="receipt">Receipt</th><th data-sales-sort="date">Date</th></tr>';
+    installSalesSorting(table);
 
     for (const control of filters.querySelectorAll('input,select')) control.addEventListener('change', renderSales);
     filters.querySelector('#sales-clear').addEventListener('click', () => {
@@ -433,6 +432,83 @@ if (!config?.supabaseUrl || !config?.supabaseAnonKey || !config?.adminFunctionUr
     };
   }
 
+  let salesSort = { key: 'date', direction: 'desc' };
+
+  function installSalesSorting(table) {
+    for (const th of table.querySelectorAll('thead th[data-sales-sort]')) {
+      const key = th.dataset.salesSort;
+      const label = th.textContent.trim();
+      th.textContent = '';
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'column-sort';
+      button.setAttribute('aria-label', `Sort by ${label}`);
+      button.innerHTML = `<span>${escapeHtml(label)}</span><span class="sort-indicator" aria-hidden="true">${salesSort.key === key ? (salesSort.direction === 'asc' ? '▲' : '▼') : '↕'}</span>`;
+      if (salesSort.key === key) button.classList.add('active');
+      button.addEventListener('click', () => {
+        salesSort = {
+          key,
+          direction: salesSort.key === key && salesSort.direction === 'asc' ? 'desc' : 'asc',
+        };
+        renderSales();
+      });
+      th.append(button);
+    }
+  }
+
+  function salesComparator(a, b) {
+    const direction = salesSort.direction === 'asc' ? 1 : -1;
+    const text = (value) => String(value || '').toLocaleLowerCase();
+    let left;
+    let right;
+    switch (salesSort.key) {
+      case 'customer':
+        left = text(customerNameForGroup(a.customer, a.license));
+        right = text(customerNameForGroup(b.customer, b.license));
+        break;
+      case 'type':
+        left = text(labelSaleType(a.type));
+        right = text(labelSaleType(b.type));
+        break;
+      case 'source':
+        left = text(a.source);
+        right = text(b.source);
+        break;
+      case 'gross':
+        left = a.gross == null ? Number.NEGATIVE_INFINITY : Number(a.gross);
+        right = b.gross == null ? Number.NEGATIVE_INFINITY : Number(b.gross);
+        break;
+      case 'capacity':
+        left = a.resultingCapacity || a.capacityDelta || a.tier || 0;
+        right = b.resultingCapacity || b.capacityDelta || b.tier || 0;
+        break;
+      case 'receipt':
+        left = text(a.receipt);
+        right = text(b.receipt);
+        break;
+      case 'date':
+      default:
+        left = new Date(a.at || 0).getTime();
+        right = new Date(b.at || 0).getTime();
+        break;
+    }
+    if (typeof left === 'number' && typeof right === 'number') return (left - right) * direction;
+    return String(left).localeCompare(String(right), undefined, { numeric: true, sensitivity: 'base' }) * direction;
+  }
+
+  function updateSalesSortIndicators() {
+    const table = document.querySelector('#view-sales .data-table');
+    if (!table) return;
+    for (const th of table.querySelectorAll('thead th[data-sales-sort]')) {
+      const button = th.querySelector('.column-sort');
+      if (!button) continue;
+      const active = th.dataset.salesSort === salesSort.key;
+      button.classList.toggle('active', active);
+      const indicator = button.querySelector('.sort-indicator');
+      if (indicator) indicator.textContent = active ? (salesSort.direction === 'asc' ? '▲' : '▼') : '↕';
+    }
+  }
+
   function filteredSalesRows() {
     const start = document.querySelector('#sales-start')?.value || '';
     const end = document.querySelector('#sales-end')?.value || '';
@@ -456,7 +532,7 @@ if (!config?.supabaseUrl || !config?.supabaseAnonKey || !config?.adminFunctionUr
   function renderSales() {
     const rowsElement = document.querySelector('#sales-rows');
     if (!rowsElement) return;
-    const rows = filteredSalesRows();
+    const rows = filteredSalesRows().sort(salesComparator);
 
     if (salesObserver) salesObserver.disconnect();
     rowsElement.replaceChildren();
@@ -466,15 +542,14 @@ if (!config?.supabaseUrl || !config?.supabaseAnonKey || !config?.adminFunctionUr
       const capacityText = sale.capacityDelta
         ? `+${sale.capacityDelta} slots → ${sale.resultingCapacity}`
         : `${sale.tier || '—'}-avatar •••• ${sale.license?.key_last4 || '—'}`;
-      tr.innerHTML = `<td class="name-cell"><strong>${escapeHtml(customerName)}</strong></td><td>${escapeHtml(labelSaleType(sale.type))}</td><td>${escapeHtml(sale.source || '—')}</td><td>${escapeHtml(formatAmount(sale.gross, sale.currency))}</td><td>${escapeHtml(formatAmount(sale.fee, sale.currency))}</td><td>${escapeHtml(formatAmount(sale.net, sale.currency))}</td><td>${escapeHtml(capacityText)}</td><td><span class="uuid-short">${escapeHtml(shortReceipt(sale.receipt))}</span></td><td>${escapeHtml(shortDate(sale.at))}</td>`;
+      tr.innerHTML = `<td class="name-cell"><strong>${escapeHtml(customerName)}</strong></td><td>${escapeHtml(labelSaleType(sale.type))}</td><td>${escapeHtml(sale.source || '—')}</td><td>${escapeHtml(formatAmount(sale.gross, sale.currency))}</td><td>${escapeHtml(capacityText)}</td><td><span class="uuid-short">${escapeHtml(shortReceipt(sale.receipt))}</span></td><td>${escapeHtml(shortDate(sale.at))}</td>`;
       rowsElement.append(tr);
     }
-    if (!rows.length) rowsElement.innerHTML = '<tr><td colspan="9" class="muted">No matching payment records.</td></tr>';
+    if (!rows.length) rowsElement.innerHTML = '<tr><td colspan="7" class="muted">No matching payment records.</td></tr>';
     if (salesObserver) salesObserver.observe(rowsElement, { childList: true });
 
     document.querySelector('#sales-gross').textContent = summarizeMoney(rows, 'gross');
-    document.querySelector('#sales-fees').textContent = summarizeMoney(rows, 'fee', true);
-    document.querySelector('#sales-net').textContent = summarizeMoney(rows, 'net', true);
+    updateSalesSortIndicators();
 
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
@@ -486,15 +561,13 @@ if (!config?.supabaseUrl || !config?.supabaseAnonKey || !config?.adminFunctionUr
 
   function exportSalesCsv() {
     const rows = filteredSalesRows();
-    const csvRows = [['Customer','Primary UUID','Type','Source','Gross','Fees','Net','Currency','Tier','Capacity added','Resulting capacity','License ending','Receipt / transaction','Date']];
+    const csvRows = [['Customer','Primary UUID','Type','Source','Gross','Currency','Tier','Capacity added','Resulting capacity','License ending','Receipt / transaction','Date']];
     for (const sale of rows) csvRows.push([
       customerNameForGroup(sale.customer, sale.license),
       sale.customer?.primaryUuid || sale.license?.purchaser_avatar_uuid || '',
       labelSaleType(sale.type),
       sale.source || '',
       sale.gross ?? '',
-      sale.fee ?? '',
-      sale.net ?? '',
       sale.currency || '',
       sale.tier || '',
       sale.capacityDelta || '',
