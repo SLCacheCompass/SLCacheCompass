@@ -207,6 +207,8 @@ async function refreshData() {
     const params = new URLSearchParams({ q: '', status: '', limit: '1000' });
     const result = await api(`?${params}`);
     licenses = Array.isArray(result.licenses) ? result.licenses : [];
+    window.CACHE_COMPASS_ADMIN_LICENSES = licenses;
+    window.dispatchEvent(new CustomEvent('cachecompass:licenses-loaded', { detail: { licenses } }));
     customers = buildCustomers(licenses);
     renderAll();
     appMessage.textContent = '';
