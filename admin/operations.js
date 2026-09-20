@@ -626,6 +626,10 @@ if (!config?.supabaseUrl || !config?.supabaseAnonKey || !config?.adminFunctionUr
     }
   }
 
+  function salesPageRows() {
+    return allSalesRows().filter((sale) => sale.gross == null || Number(sale.gross) !== 0);
+  }
+
   function filteredSalesRows() {
     const start = document.querySelector('#sales-start')?.value || '';
     const end = document.querySelector('#sales-end')?.value || '';
@@ -636,7 +640,7 @@ if (!config?.supabaseUrl || !config?.supabaseAnonKey || !config?.adminFunctionUr
     const startAt = start ? new Date(`${start}T00:00:00`).getTime() : null;
     const endAt = end ? new Date(`${end}T23:59:59.999`).getTime() : null;
 
-    return allSalesRows().filter((sale) => {
+    return salesPageRows().filter((sale) => {
       const at = new Date(sale.at).getTime();
       if (startAt != null && at < startAt) return false;
       if (endAt != null && at > endAt) return false;
@@ -652,7 +656,7 @@ if (!config?.supabaseUrl || !config?.supabaseAnonKey || !config?.adminFunctionUr
     const select = document.querySelector('#sales-source');
     if (!select) return;
     const selected = select.value;
-    const sources = [...new Set(allSalesRows().map((sale) => String(sale.source || '').trim().toUpperCase()).filter(Boolean))].sort();
+    const sources = [...new Set(salesPageRows().map((sale) => String(sale.source || '').trim().toUpperCase()).filter(Boolean))].sort();
     select.innerHTML = '<option value="">All sources</option>' + sources.map((source) => `<option value="${escapeHtml(source)}">${escapeHtml(source)}</option>`).join('');
     if (sources.includes(selected)) select.value = selected;
   }
@@ -703,7 +707,7 @@ if (!config?.supabaseUrl || !config?.supabaseAnonKey || !config?.adminFunctionUr
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
     const yearStart = new Date(now.getFullYear(), 0, 1).getTime();
-    const all = allSalesRows();
+    const all = salesPageRows();
     document.querySelector('#sales-month').textContent = summarizeMoney(all.filter((sale) => new Date(sale.at).getTime() >= monthStart), 'gross');
     document.querySelector('#sales-ytd').textContent = summarizeMoney(all.filter((sale) => new Date(sale.at).getTime() >= yearStart), 'gross');
   }
