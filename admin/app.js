@@ -180,7 +180,7 @@ function switchView(name) {
   if (name === 'dashboard') renderDashboard();
   if (name === 'customers') renderCustomers();
   if (name === 'licenses') renderLicenseTable();
-  if (name === 'sales') renderSales();
+  if (name === 'sales') window.dispatchEvent(new CustomEvent('cachecompass:sales-view'));
 }
 
 async function authHeaders() {
@@ -305,7 +305,6 @@ function renderAll() {
   renderDashboard();
   renderCustomers();
   renderLicenseTable();
-  renderSales();
   if (selectedCustomerKey) {
     const customer = findCustomer(selectedCustomerKey);
     if (customer) renderDrawer(customer); else closeDrawer();
