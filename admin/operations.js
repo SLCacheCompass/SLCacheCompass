@@ -346,8 +346,22 @@ if (!config?.supabaseUrl || !config?.supabaseAnonKey || !config?.adminFunctionUr
 
     for (const license of licenses) {
       const customer = groupForLicense(license);
+      const purchases = Array.isArray(license.purchases) ? license.purchases : [];
       const orders = Array.isArray(license.orders) ? license.orders : [];
-      if (orders.length) {
+
+      if (purchases.length) {
+        for (const purchase of purchases) {
+          const receipt = firstText(
+            purchase.processor_transaction_id,
+            purchase.external_order_id,
+            purchase.id,
+            license.external_transaction_id,
+          );
+          const capacityEvent = receipt ? eventByTransaction.get(receipt) : null;
+          if (capacityEvent) usedEvents.add(capacityEvent.id);
+          rows.push(saleFromPurchase(license, customer, purchase, capacityEvent));
+        }
+      } else if (orders.length) {
         for (const order of orders) {
           const receipt = firstText(order.external_transaction_id, order.transaction_id, order.receipt_id, order.id, license.external_transaction_id);
           const capacityEvent = receipt ? eventByTransaction.get(receipt) : null;
@@ -383,6 +397,32 @@ if (!config?.supabaseUrl || !config?.supabaseAnonKey || !config?.adminFunctionUr
       });
     }
     return rows.filter((row) => row.at).sort((a, b) => new Date(b.at) - new Date(a.at));
+  }
+
+  function saleFromPurchase(license, customer, purchase, capacityEvent) {
+    const currency = normalizeCurrency(purchase.original_currency || purchase.currency || license.payment_currency);
+    const gross = numberOrNull(purchase.original_amount ?? purchase.amount ?? license.payment_amount);
+    return {
+      customer,
+      license,
+      type: capacityEvent ? normalizeSaleType(capacityEvent.event_type) : detectSaleType(purchase, license),
+      source: String(purchase.channel || purchase.processor || license.payment_method || '').toUpperCase(),
+      currency,
+      gross,
+      fee: null,
+      net: null,
+      receipt: firstText(
+        purchase.processor_transaction_id,
+        purchase.external_order_id,
+        purchase.id,
+        license.external_transaction_id,
+      ),
+      at: purchase.paid_at || purchase.purchased_at || purchase.created_at || license.created_at,
+      tier: Number(license.tier || 0),
+      capacityDelta: Number(capacityEvent?.delta_slots || 0),
+      resultingCapacity: Number(capacityEvent?.resulting_capacity || 0),
+      status: String(purchase.status || ''),
+    };
   }
 
   function saleFromOrder(license, customer, order, capacityEvent) {
