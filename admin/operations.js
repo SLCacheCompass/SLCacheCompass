@@ -99,7 +99,9 @@ if (!config?.supabaseUrl || !config?.supabaseAnonKey || !config?.adminFunctionUr
   function groupCustomers(items) {
     const groups = new Map();
     for (const license of items) {
-      const email = (license.orders || []).find((order) => order.purchaser_email)?.purchaser_email || '';
+      const email = (license.purchases || []).find((purchase) => purchase.purchaser_email)?.purchaser_email
+        || (license.orders || []).find((order) => order.purchaser_email)?.purchaser_email
+        || '';
       const firstAvatar = Array.isArray(license.avatars) ? license.avatars[0] : null;
       const primaryUuid = String(license.purchaser_avatar_uuid || firstAvatar?.avatar_uuid || '').toLowerCase();
       const key = license.customer_id
@@ -311,6 +313,11 @@ if (!config?.supabaseUrl || !config?.supabaseAnonKey || !config?.adminFunctionUr
       .sales-customer-link strong{color:var(--cream)}
       .sales-customer-link:hover strong{color:var(--teal);text-decoration:underline}
       .sales-flag{display:inline-flex;margin-left:5px;align-items:center;border:1px solid rgba(226,189,118,.52);border-radius:999px;padding:2px 6px;color:var(--gold);font-size:8px;font-weight:850;letter-spacing:.08em;text-transform:uppercase}
+      #view-sales .data-table th:has(.column-sort){padding:0}
+      #view-sales .column-sort{width:100%;height:34px;padding:0 12px;border:0;background:transparent;color:inherit;font:inherit;font-weight:inherit;letter-spacing:inherit;text-transform:inherit;display:flex;align-items:center;justify-content:flex-start;gap:6px;cursor:pointer;text-align:left;white-space:nowrap}
+      #view-sales .column-sort:hover,#view-sales .column-sort.active{color:var(--teal)}
+      #view-sales .sort-indicator{font-size:9px;opacity:.65;line-height:1}
+      #view-sales .column-sort.active .sort-indicator{opacity:1;color:var(--gold)}
       @media(max-width:900px){#sales-summary{grid-template-columns:repeat(2,minmax(0,1fr))}#sales-filters{grid-template-columns:repeat(2,minmax(140px,1fr))!important}}
       @media(max-width:620px){#sales-summary,#sales-filters{grid-template-columns:1fr!important}}
     `;
@@ -619,7 +626,7 @@ if (!config?.supabaseUrl || !config?.supabaseAnonKey || !config?.adminFunctionUr
   function saleStatusFlag(sale) {
     const status = String(sale.status || '').trim().toLowerCase();
     if (sale.type === 'chargeback' || /chargeback|charged_back|dispute|reversal/.test(status)) return 'Attention';
-    if (/refund|refunded|reversed|failed|cancelled|canceled/.test(status)) return humanize(status);
+    if (/refund|refunded|reversed|failed|cancelled|canceled/.test(status)) return status.replaceAll('_', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
     if (sale.type === 'comp') return 'Comp';
     if (sale.type === 'manual') return 'Manual';
     return '';
@@ -771,8 +778,9 @@ if (!config?.supabaseUrl || !config?.supabaseAnonKey || !config?.adminFunctionUr
   function customerNameForGroup(group, license) {
     const avatars = Array.isArray(license?.avatars) ? license.avatars : [];
     const purchaser = avatars.find((avatar) => avatar.avatar_uuid === license?.purchaser_avatar_uuid);
+    const purchaseName = (license?.purchases || []).find((purchase) => purchase.purchaser_avatar_name)?.purchaser_avatar_name;
     const orderName = (license?.orders || []).find((order) => order.purchaser_avatar_name)?.purchaser_avatar_name;
-    return purchaser?.avatar_name || orderName || avatars.find((avatar) => avatar.avatar_name)?.avatar_name || group?.primaryUuid || group?.email || 'Customer';
+    return purchaser?.avatar_name || purchaseName || orderName || avatars.find((avatar) => avatar.avatar_name)?.avatar_name || group?.primaryUuid || group?.email || 'Customer';
   }
 
   function detectSaleType(order, license) {
