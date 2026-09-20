@@ -301,7 +301,24 @@ if (!config?.supabaseUrl || !config?.supabaseAnonKey || !config?.adminFunctionUr
     }
   }
 
+  function installSalesStyles() {
+    if (document.querySelector('#sales-ui-styles')) return;
+    const style = document.createElement('style');
+    style.id = 'sales-ui-styles';
+    style.textContent = `
+      #sales-summary{grid-template-columns:repeat(4,minmax(0,1fr))}
+      .sales-customer-link{border:0;background:transparent;color:inherit;padding:0;font:inherit;cursor:pointer;text-align:left}
+      .sales-customer-link strong{color:var(--cream)}
+      .sales-customer-link:hover strong{color:var(--teal);text-decoration:underline}
+      .sales-flag{display:inline-flex;margin-left:5px;align-items:center;border:1px solid rgba(226,189,118,.52);border-radius:999px;padding:2px 6px;color:var(--gold);font-size:8px;font-weight:850;letter-spacing:.08em;text-transform:uppercase}
+      @media(max-width:900px){#sales-summary{grid-template-columns:repeat(2,minmax(0,1fr))}#sales-filters{grid-template-columns:repeat(2,minmax(140px,1fr))!important}}
+      @media(max-width:620px){#sales-summary,#sales-filters{grid-template-columns:1fr!important}}
+    `;
+    document.head.append(style);
+  }
+
   function installSalesUi() {
+    installSalesStyles();
     const view = document.querySelector('#view-sales');
     const table = view?.querySelector('.data-table');
     if (!view || !table || view.dataset.salesOps === '1') return;
@@ -310,30 +327,32 @@ if (!config?.supabaseUrl || !config?.supabaseAnonKey || !config?.adminFunctionUr
     const filters = document.createElement('div');
     filters.className = 'filterbar';
     filters.id = 'sales-filters';
-    filters.style.gridTemplateColumns = 'repeat(6,minmax(120px,1fr)) auto';
+    filters.style.gridTemplateColumns = 'repeat(7,minmax(120px,1fr)) auto';
     filters.innerHTML = `
       <input id="sales-start" type="date" aria-label="Sales start date">
       <input id="sales-end" type="date" aria-label="Sales end date">
       <select id="sales-currency" aria-label="Currency"><option value="">USD + L$</option><option value="USD">USD</option><option value="L$">L$</option></select>
       <select id="sales-tier" aria-label="Tier"><option value="">All tiers</option><option value="3">3</option><option value="5">5</option><option value="10">10</option></select>
       <select id="sales-type" aria-label="Sale type"><option value="">All types</option><option value="sale">New sale</option><option value="upgrade">Upgrade</option><option value="gift">Gift</option><option value="comp">Comp</option><option value="chargeback">Chargeback</option><option value="manual">Manual / Test</option></select>
+      <select id="sales-source" aria-label="Sales source"><option value="">All sources</option></select>
       <button id="sales-clear" class="button quiet" type="button">Clear</button>
       <button id="sales-export" class="button quiet" type="button">Export CSV</button>`;
 
     const summary = document.createElement('div');
     summary.id = 'sales-summary';
     summary.className = 'metric-grid';
-    summary.style.gridTemplateColumns = 'repeat(3,minmax(0,1fr))';
+    summary.style.gridTemplateColumns = 'repeat(4,minmax(0,1fr))';
     summary.style.marginBottom = '12px';
     summary.innerHTML = `
       <div class="metric" style="cursor:default"><span>Gross</span><strong id="sales-gross">—</strong></div>
       <div class="metric" style="cursor:default"><span>This month</span><strong id="sales-month">—</strong></div>
-      <div class="metric" style="cursor:default"><span>YTD</span><strong id="sales-ytd">—</strong></div>`;
+      <div class="metric" style="cursor:default"><span>YTD</span><strong id="sales-ytd">—</strong></div>
+      <div class="metric" style="cursor:default"><span>Sales count</span><strong id="sales-count">0</strong></div>`;
 
     const shell = view.querySelector('.table-shell');
     shell.parentElement.insertBefore(filters, shell);
     shell.parentElement.insertBefore(summary, shell);
-    table.querySelector('thead').innerHTML = '<tr><th data-sales-sort="customer">Customer</th><th data-sales-sort="type">Type</th><th data-sales-sort="source">Source</th><th data-sales-sort="gross">Gross</th><th data-sales-sort="capacity">License / Capacity</th><th data-sales-sort="receipt">Receipt</th><th data-sales-sort="date">Date</th></tr>';
+    table.querySelector('thead').innerHTML = '<tr><th data-sales-sort="customer">Customer</th><th data-sales-sort="type">Type</th><th data-sales-sort="source">Source</th><th data-sales-sort="gross">Gross</th><th data-sales-sort="capacity">Product</th><th data-sales-sort="receipt">Receipt</th><th data-sales-sort="date">Date</th></tr>';
     installSalesSorting(table);
 
     for (const control of filters.querySelectorAll('input,select')) control.addEventListener('change', renderSales);
@@ -572,6 +591,7 @@ if (!config?.supabaseUrl || !config?.supabaseAnonKey || !config?.adminFunctionUr
     const currency = document.querySelector('#sales-currency')?.value || '';
     const tier = document.querySelector('#sales-tier')?.value || '';
     const type = document.querySelector('#sales-type')?.value || '';
+    const source = document.querySelector('#sales-source')?.value || '';
     const startAt = start ? new Date(`${start}T00:00:00`).getTime() : null;
     const endAt = end ? new Date(`${end}T23:59:59.999`).getTime() : null;
 
@@ -582,13 +602,33 @@ if (!config?.supabaseUrl || !config?.supabaseAnonKey || !config?.adminFunctionUr
       if (currency && sale.currency !== currency) return false;
       if (tier && Number(tier) !== sale.tier) return false;
       if (type && sale.type !== type) return false;
+      if (source && String(sale.source || '').toUpperCase() !== source) return false;
       return true;
     });
+  }
+
+  function refreshSalesSourceFilter() {
+    const select = document.querySelector('#sales-source');
+    if (!select) return;
+    const selected = select.value;
+    const sources = [...new Set(allSalesRows().map((sale) => String(sale.source || '').trim().toUpperCase()).filter(Boolean))].sort();
+    select.innerHTML = '<option value="">All sources</option>' + sources.map((source) => `<option value="${escapeHtml(source)}">${escapeHtml(source)}</option>`).join('');
+    if (sources.includes(selected)) select.value = selected;
+  }
+
+  function saleStatusFlag(sale) {
+    const status = String(sale.status || '').trim().toLowerCase();
+    if (sale.type === 'chargeback' || /chargeback|charged_back|dispute|reversal/.test(status)) return 'Attention';
+    if (/refund|refunded|reversed|failed|cancelled|canceled/.test(status)) return humanize(status);
+    if (sale.type === 'comp') return 'Comp';
+    if (sale.type === 'manual') return 'Manual';
+    return '';
   }
 
   function renderSales() {
     const rowsElement = document.querySelector('#sales-rows');
     if (!rowsElement) return;
+    refreshSalesSourceFilter();
     const rows = filteredSalesRows().sort(salesComparator);
 
     if (salesObserver) salesObserver.disconnect();
@@ -596,16 +636,31 @@ if (!config?.supabaseUrl || !config?.supabaseAnonKey || !config?.adminFunctionUr
     for (const sale of rows) {
       const tr = document.createElement('tr');
       const customerName = customerNameForGroup(sale.customer, sale.license);
-      const capacityText = sale.capacityDelta
-        ? `+${sale.capacityDelta} slots → ${sale.resultingCapacity}`
-        : `${sale.tier || '—'}-avatar •••• ${sale.license?.key_last4 || '—'}`;
-      tr.innerHTML = `<td class="name-cell"><strong>${escapeHtml(customerName)}</strong></td><td>${escapeHtml(labelSaleType(sale.type))}</td><td>${escapeHtml(sale.source || '—')}</td><td>${escapeHtml(formatAmount(sale.gross, sale.currency))}</td><td>${escapeHtml(capacityText)}</td><td><span class="uuid-short">${escapeHtml(shortReceipt(sale.receipt))}</span></td><td>${escapeHtml(shortDate(sale.at))}</td>`;
+      const productText = sale.capacityDelta
+        ? `+${sale.capacityDelta} Avatar Upgrade`
+        : sale.tier
+          ? `${sale.tier} Avatar License`
+          : 'License';
+      const statusFlag = saleStatusFlag(sale);
+      tr.innerHTML = `<td class="name-cell"><button class="sales-customer-link" type="button"><strong>${escapeHtml(customerName)}</strong></button></td><td>${escapeHtml(labelSaleType(sale.type))}${statusFlag ? ` <span class="sales-flag">${escapeHtml(statusFlag)}</span>` : ''}</td><td>${escapeHtml(sale.source || '—')}</td><td>${escapeHtml(formatAmount(sale.gross, sale.currency))}</td><td>${escapeHtml(productText)}</td><td><span class="uuid-short">${escapeHtml(shortReceipt(sale.receipt))}</span></td><td>${escapeHtml(shortDate(sale.at))}</td>`;
+      tr.querySelector('.sales-customer-link')?.addEventListener('click', (event) => {
+        event.stopPropagation();
+        window.dispatchEvent(new CustomEvent('cachecompass:open-customer', {
+          detail: {
+            customerId: sale.customer?.customerId || sale.license?.customer_id || '',
+            primaryUuid: sale.customer?.primaryUuid || sale.license?.purchaser_avatar_uuid || '',
+            email: sale.customer?.email || '',
+            licenseId: sale.license?.id || '',
+          },
+        }));
+      });
       rowsElement.append(tr);
     }
     if (!rows.length) rowsElement.innerHTML = '<tr><td colspan="7" class="muted">No matching payment records.</td></tr>';
     if (salesObserver) salesObserver.observe(rowsElement, { childList: true });
 
     document.querySelector('#sales-gross').textContent = summarizeMoney(rows, 'gross');
+    document.querySelector('#sales-count').textContent = rows.length;
     updateSalesSortIndicators();
 
     const now = new Date();
