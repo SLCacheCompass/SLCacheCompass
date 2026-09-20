@@ -22,27 +22,10 @@ if (heroTitle && bossCta) {
   bossCta.style.margin = '24px auto 30px';
 }
 
-// Show Beetle Wilder's commercial on the homepage using the published YouTube video.
+// The homepage video embeds are authored directly in index.html.
+// Keep the section visible without restyling or replacing either iframe.
 const beetleSection = document.querySelector('#beetle-commercial');
-const beetleVideo = document.querySelector('#beetle-commercial-video');
-if (beetleSection && beetleVideo) {
-  const iframe = document.createElement('iframe');
-  iframe.id = 'beetle-commercial-video';
-  iframe.src = 'https://www.youtube-nocookie.com/embed/mb1KRb1o25g?rel=0';
-  iframe.title = 'Cache Compass commercial by Beetle Wilder / Wilder Productions';
-  iframe.loading = 'lazy';
-  iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
-  iframe.allowFullscreen = true;
-  iframe.style.display = 'block';
-  iframe.style.width = 'min(100%, 960px)';
-  iframe.style.aspectRatio = '16 / 9';
-  iframe.style.height = 'auto';
-  iframe.style.margin = '28px auto 14px';
-  iframe.style.border = '1px solid rgba(199,155,76,.28)';
-  iframe.style.borderRadius = '18px';
-  iframe.style.background = '#030607';
-  iframe.style.boxShadow = '0 24px 70px rgba(0,0,0,.35)';
-  beetleVideo.replaceWith(iframe);
+if (beetleSection) {
   beetleSection.hidden = false;
 }
 
