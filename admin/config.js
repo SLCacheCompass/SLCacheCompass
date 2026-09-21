@@ -7,6 +7,7 @@ window.CACHE_COMPASS_ADMIN_CONFIG = {
   deleteLicenseFunctionUrl: 'https://glamoujtjfczrpkrpbmp.supabase.co/functions/v1/admin-delete-license',
   purgeFunctionUrl: 'https://glamoujtjfczrpkrpbmp.supabase.co/functions/v1/admin-purge',
   entitlementFunctionUrl: 'https://glamoujtjfczrpkrpbmp.supabase.co/functions/v1/admin-entitlements',
+  supportFunctionUrl: 'https://glamoujtjfczrpkrpbmp.supabase.co/functions/v1/admin-support-mailbox',
 };
 
 window.addEventListener('load', () => {
