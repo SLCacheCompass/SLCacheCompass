@@ -206,6 +206,7 @@ async function sendReply(event, message) {
 }
 
 function updateUnread(count) {
+  window.CACHE_COMPASS_SUPPORT_UNREAD = count == null ? null : Number(count);
   const metric = document.querySelector('#metric-support');
   if (!metric) return;
   metric.textContent = count == null ? '—' : String(count);
