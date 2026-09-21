@@ -322,7 +322,7 @@ function renderDashboard() {
   document.querySelector('#metric-licenses').textContent = newLicenses.length;
   document.querySelector('#metric-avatars').textContent = avatarActivity.length;
   document.querySelector('#metric-attention').textContent = attention.length;
-  document.querySelector('#metric-support').textContent = '—';
+  document.querySelector('#metric-support').textContent = window.CACHE_COMPASS_SUPPORT_UNREAD == null ? '—' : String(window.CACHE_COMPASS_SUPPORT_UNREAD);
   document.querySelector('#since-label').textContent = previousLogin ? `Since ${formatDate(previousLogin)}` : 'First recorded owner session — showing all available activity.';
 
   const activity = [];
