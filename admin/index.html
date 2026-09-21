@@ -264,11 +264,27 @@
       </section>
 
       <section id="view-support" class="view">
-        <div class="view-heading"><div><p class="eyebrow">SUPPORT</p><h2>Support inbox</h2></div></div>
-        <section class="panel empty-state">
-          <h3>Email connection is not configured yet</h3>
-          <p>The dashboard is ready for a support inbox, but email has not been connected to this website. No messages are being read or stored here yet.</p>
-        </section>
+        <div class="view-heading split">
+          <div><p class="eyebrow">SUPPORT</p><h2>Support inbox</h2><p class="muted">support@slcachecompass.com</p></div>
+          <div class="inline-actions"><button id="support-refresh" class="button quiet" type="button">Refresh</button></div>
+        </div>
+        <div id="support-status" class="message" role="status"></div>
+        <div class="support-layout">
+          <section class="panel support-list-panel">
+            <div class="support-list-head">
+              <input id="support-search" type="search" placeholder="Search sender or subject">
+              <span id="support-count" class="muted"></span>
+            </div>
+            <div id="support-list" class="support-list"></div>
+          </section>
+          <section id="support-reader" class="panel support-reader">
+            <div class="support-empty">
+              <p class="eyebrow">INBOX</p>
+              <h3>Select a message</h3>
+              <p class="muted">Choose an email on the left to read and reply.</p>
+            </div>
+          </section>
+        </div>
       </section>
     </section>
   </main>
@@ -324,5 +340,6 @@
   <script type="module" src="dashboard-totals.js"></script>
   <script type="module" src="operations.js?v=20260921-1"></script>
   <script type="module" src="accounting.js"></script>
+  <script type="module" src="support.js?v=20260921-1"></script>
 </body>
 </html>
