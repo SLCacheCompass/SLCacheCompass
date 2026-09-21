@@ -318,8 +318,11 @@ if (!config?.supabaseUrl || !config?.supabaseAnonKey || !config?.adminFunctionUr
       #view-sales .column-sort:hover,#view-sales .column-sort.active{color:var(--teal)}
       #view-sales .sort-indicator{font-size:9px;opacity:.65;line-height:1}
       #view-sales .column-sort.active .sort-indicator{opacity:1;color:var(--gold)}
-      @media(max-width:900px){#sales-summary{grid-template-columns:repeat(2,minmax(0,1fr))}#sales-filters{grid-template-columns:repeat(2,minmax(140px,1fr))!important}}
-      @media(max-width:620px){#sales-summary,#sales-filters{grid-template-columns:1fr!important}}
+      #sales-filters>*{min-width:0}
+      #sales-filters .button{width:auto;white-space:nowrap;padding-left:14px;padding-right:14px}
+      @media(max-width:1050px){#sales-filters{grid-template-columns:repeat(4,minmax(0,1fr))!important}}
+      @media(max-width:900px){#sales-summary{grid-template-columns:repeat(2,minmax(0,1fr))}#sales-filters{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+      @media(max-width:620px){#sales-summary,#sales-filters{grid-template-columns:1fr!important}#sales-filters .button{width:100%}}
     `;
     document.head.append(style);
   }
@@ -344,7 +347,7 @@ if (!config?.supabaseUrl || !config?.supabaseAnonKey || !config?.adminFunctionUr
     const filters = document.createElement('div');
     filters.className = 'filterbar';
     filters.id = 'sales-filters';
-    filters.style.gridTemplateColumns = 'repeat(7,minmax(120px,1fr)) auto';
+    filters.style.gridTemplateColumns = 'repeat(6,minmax(0,1fr)) auto auto';
     filters.innerHTML = `
       <input id="sales-start" type="date" aria-label="Sales start date">
       <input id="sales-end" type="date" aria-label="Sales end date">
