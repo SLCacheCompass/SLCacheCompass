@@ -275,14 +275,8 @@
 
 
 /* Four-tier USD pricing, including the website-only single-avatar license. */
-.single-avatar-card .single-avatar-detail{
-  order:5;
-  width:100%;
-  margin:24px 0 0;
-  padding-top:18px;
-  border-top:1px solid rgba(217,222,219,.12);
-  color:#929b96;
-  font-size:14px;
+.pricing-grid-four .single-avatar-card .launch-price-label{
+  margin-bottom:auto;
 }
 @media(min-width:1101px){
   .pricing-grid.pricing-grid-three.pricing-grid-four{
