@@ -40,11 +40,11 @@
 }
 
 /* Keep the 10-avatar pricing card completely clean: no badge artwork or decorative overlays. */
-.pricing-grid-three .price-card:nth-child(3)::before,
-.pricing-grid-three .price-card:nth-child(3)::after,
-.pricing-grid-three .price-card:nth-child(3) > img,
-.pricing-grid-three .price-card:nth-child(3) > svg,
-.pricing-grid-three .price-card:nth-child(3) > .badge{
+.pricing-grid-three .price-card:nth-child(4)::before,
+.pricing-grid-three .price-card:nth-child(4)::after,
+.pricing-grid-three .price-card:nth-child(4) > img,
+.pricing-grid-three .price-card:nth-child(4) > svg,
+.pricing-grid-three .price-card:nth-child(4) > .badge{
   display:none !important;
   content:none !important;
   background:none !important;
@@ -270,5 +270,32 @@
   }
   .pricing-grid-three .price-card > .button{
     margin-top:22px;
+  }
+}
+
+
+/* Four-tier USD pricing, including the website-only single-avatar license. */
+.single-avatar-card .single-avatar-detail{
+  order:5;
+  width:100%;
+  margin:24px 0 0;
+  padding-top:18px;
+  border-top:1px solid rgba(217,222,219,.12);
+  color:#929b96;
+  font-size:14px;
+}
+@media(min-width:1101px){
+  .pricing-grid.pricing-grid-three.pricing-grid-four{
+    grid-template-columns:repeat(4,minmax(0,1fr)) !important;
+    max-width:1280px;
+  }
+  .pricing-grid-four .price-card{
+    padding:34px 28px 32px;
+  }
+}
+@media(min-width:901px) and (max-width:1100px){
+  .pricing-grid.pricing-grid-three.pricing-grid-four{
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+    max-width:900px;
   }
 }
