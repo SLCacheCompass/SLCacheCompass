@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cache Compass Support Diagnostic</title>
+<meta name="description" content="Cache Compass support diagnostic download and instructions.">
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="overrides.css">
+<style>
+main{max-width:980px;margin:34px auto 90px;padding:0 24px}
+.back-link{display:inline-flex;align-items:center;gap:8px;margin-bottom:14px;color:#d8d6cf;text-decoration:none;font-size:15px}.back-link:hover{color:#fff}
+.support-card{position:relative;overflow:hidden;border:1px solid rgba(199,155,76,.34);border-radius:24px;background:linear-gradient(145deg,#0b1213 0%,#081011 55%,#0a1011 100%);padding:46px;box-shadow:0 34px 100px rgba(0,0,0,.42),inset 0 1px 0 rgba(255,255,255,.018)}
+.support-card:before{content:"";position:absolute;inset:0 0 auto 0;height:1px;background:linear-gradient(90deg,transparent,rgba(226,189,118,.72),transparent)}
+.support-card h1{margin:0;font-size:clamp(38px,5vw,56px);line-height:1.02;letter-spacing:-.035em}
+.hero-subtitle{margin:18px 0 0;color:#aeb6b2;line-height:1.65;font-size:18px;max-width:760px}
+.notice{margin-top:26px;padding:18px 20px;border:1px solid rgba(102,212,206,.22);border-radius:14px;background:rgba(6,13,14,.72);color:#cbd2ce;line-height:1.65}
+.notice strong{color:#f4efe4}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:18px}
+.panel{border:1px solid rgba(199,155,76,.17);border-radius:15px;padding:22px;background:rgba(7,13,14,.58)}
+.panel .kicker{margin:0 0 7px;color:#d5ad61;font-size:10px;font-weight:850;letter-spacing:.13em;text-transform:uppercase}
+.panel h2{margin:0 0 10px;font-size:19px;letter-spacing:-.01em}
+.panel p,.panel li{color:#929c98;line-height:1.65;font-size:14px}
+.panel ol{margin:10px 0 0;padding-left:21px}
+.panel li+li{margin-top:7px}
+.download-area{margin-top:22px;padding:24px;border:1px solid rgba(102,212,206,.18);border-radius:16px;background:linear-gradient(180deg,rgba(6,13,14,.88),rgba(5,10,11,.72));text-align:center}
+.download-area p{margin:0 auto 18px;max-width:700px;color:#9aa49f;line-height:1.6}
+.download-button{display:inline-flex;align-items:center;justify-content:center;min-height:52px;padding:0 26px;border:1px solid #d5ad61;border-radius:11px;background:#17140e;color:#f4efe4;text-decoration:none;font-size:13px;font-weight:850;letter-spacing:.09em;text-transform:uppercase;box-shadow:0 14px 32px rgba(18,103,104,.18)}
+.download-button:hover{transform:translateY(-1px);border-color:#ecd3a1}
+.small{margin-top:12px!important;color:#76817d!important;font-size:12px!important}
+.support-line{display:flex;justify-content:space-between;gap:18px;align-items:center;margin-top:22px;padding-top:18px;border-top:1px solid rgba(199,155,76,.13);color:#76817d;font-size:12px}
+.support-line a{color:#c9cfcb;text-decoration:none}.support-line a:hover{color:#fff}
+@media(max-width:760px){.grid{grid-template-columns:1fr}.support-line{align-items:flex-start;flex-direction:column;gap:6px}}
+@media(max-width:600px){main{margin:22px auto 60px;padding:0 14px}.support-card{padding:30px 20px 24px;border-radius:18px}.support-card h1{font-size:40px}.hero-subtitle{font-size:16px}}
+</style>
+</head>
+<body>
+<main>
+<a class="back-link" href="/">&larr; Back to Cache Compass</a>
+<section class="support-card">
+<p class="eyebrow">SUPPORT TOOL</p>
+<h1>Cache Compass Diagnostic</h1>
+<p class="hero-subtitle">Use this support tool when Cache Compass Support asks you to collect diagnostic information about a problem with Firestorm, Cache Compass, or an inventory move.</p>
+
+<div class="notice"><strong>This diagnostic does not make changes to Firestorm, Cache Compass, or your Second Life inventory.</strong> It does not require Administrator access. It collects basic Windows, display, Firestorm, Cache Compass, and recent diagnostic information so Support can investigate the problem.</div>
+
+<div class="grid">
+<section class="panel">
+<p class="kicker">Before you run it</p>
+<h2>Reproduce the issue first</h2>
+<ol>
+<li>Open Firestorm and let your inventory finish loading.</li>
+<li>Open Cache Compass.</li>
+<li>If you use multiple monitors, place Firestorm and Cache Compass on the same monitor for this test.</li>
+<li>Reproduce the failed move once.</li>
+<li>Leave both Firestorm and Cache Compass open.</li>
+</ol>
+</section>
+
+<section class="panel">
+<p class="kicker">Run the diagnostic</p>
+<h2>Extract, run, and send the result</h2>
+<ol>
+<li>Download the ZIP below.</li>
+<li>Extract the ZIP to a normal folder.</li>
+<li>Double-click <strong>Run Cache Compass Diagnostic.cmd</strong>.</li>
+<li>Wait for the diagnostic to finish.</li>
+<li>Windows should highlight <strong>CacheCompass-Diagnostic.txt</strong>.</li>
+<li>Attach that TXT file to your reply to Cache Compass Support.</li>
+</ol>
+</section>
+</div>
+
+<div class="download-area">
+<p>The download contains the diagnostic script, a simple launcher, and a README with the same instructions shown above.</p>
+<a class="download-button" href="/CacheCompass-Support-Diagnostic.zip" download>Download Support Diagnostic</a>
+<p class="small">Windows may display a security warning because the package contains script files used to collect diagnostic information. The diagnostic does not install software or make system changes.</p>
+</div>
+
+<div class="support-line">
+<span>Questions? <a href="mailto:support@slcachecompass.com">support@slcachecompass.com</a></span>
+<span>Cache Compass never asks for your Second Life password or MFA code.</span>
+</div>
+</section>
+</main>
+</body>
+</html>
