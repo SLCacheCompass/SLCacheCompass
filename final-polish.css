@@ -293,3 +293,50 @@
     max-width:900px;
   }
 }
+
+
+/* Permanent pricing: all four USD cards share the same content rhythm and aligned purchase action. */
+.pricing-grid-four .price-card{
+  display:flex;
+  flex-direction:column;
+}
+.pricing-grid-four .price-card .mini-title{order:1;}
+.pricing-grid-four .price-card h3{order:2;}
+.pricing-grid-four .price-card .price{
+  order:3;
+  margin:0 0 18px;
+}
+.pricing-grid-four .price-card > .pricing-note{
+  order:4;
+  margin:0;
+  padding-top:18px;
+  border-top:1px solid rgba(217,222,219,.12);
+}
+.pricing-grid-four .price-card > .button{
+  order:5;
+  margin-top:auto;
+  padding-top:15px;
+}
+.pricing-grid-four .single-avatar-card .launch-price-label{
+  margin-bottom:0;
+}
+
+/* Permanent Marketplace pricing: the displayed L$ amount is the standard price. */
+.linden-price-option{
+  min-height:170px;
+}
+.linden-price-option > .pricing-note{
+  margin:14px 0 0;
+}
+@media(max-width:760px){
+  .linden-price-option{
+    grid-template-areas:
+      "tier price"
+      "note note";
+  }
+  .linden-price-option > .pricing-note{
+    grid-area:note;
+    margin:8px 0 0;
+    text-align:left;
+  }
+}
