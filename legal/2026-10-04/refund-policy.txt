@@ -1,0 +1,74 @@
+CACHE COMPASS REFUND POLICY
+
+Effective Date: October 4, 2026
+Policy Version: 2026-10-04
+
+Cache Compass is digitally delivered licensed software whose license entitlement can be provided immediately after purchase.
+
+Except where a refund or other remedy is required by applicable law or expressly approved under this policy, purchases are generally final once the applicable license entitlement has been provided.
+
+1. REFUNDS CACHE COMPASS WILL REVIEW
+
+Cache Compass will review refund requests involving duplicate or accidental duplicate charges; payment taken when the applicable Cache Compass license was not successfully provisioned; an incorrect charge or license capacity caused by a Cache Compass purchasing-system error; a verified material technical failure attributable to Cache Compass that prevents the purchased license from being used and that Cache Compass cannot reasonably repair, replace, work around, or otherwise correct; or circumstances in which applicable law requires a refund or other remedy.
+
+2. TECHNICAL ISSUES
+
+The existence of a technical problem does not automatically require a refund.
+
+Where a verified technical failure attributable to Cache Compass prevents use of a valid purchased license, Cache Compass may attempt to repair the issue, provide an update, provide a workaround, replace or restore the affected entitlement, or provide another reasonable remedy before determining whether a refund is appropriate.
+
+Where applicable law requires a refund or another specific remedy, Cache Compass will provide the remedy required by law.
+
+3. THIRD-PARTY COMPATIBILITY
+
+Cache Compass depends on Firestorm, Second Life, Windows, and other third-party software and infrastructure that Cache Compass does not control.
+
+Those third parties may change, restrict, remove, redesign, encrypt, discontinue, or otherwise modify functionality on which Cache Compass depends.
+
+A subsequent loss or reduction of compatibility resulting from a change to Firestorm, Second Life, Windows, another third-party service, or an unsupported customer environment does not, by itself, create a right to a refund for a previously delivered and functioning Cache Compass license, except where a refund or other remedy is required by applicable law.
+
+Cache Compass may attempt to restore compatibility where technically feasible and commercially reasonable but does not guarantee that compatibility can or will be restored.
+
+4. DISCONTINUATION
+
+Cache Compass may discontinue, suspend, retire, or cease providing all or part of Cache Compass or the Services as described in the Cache Compass Terms of Service & Software License Agreement.
+
+Discontinuation does not, by itself, create a refund entitlement for a previously delivered license.
+
+A one-time purchase does not guarantee that Cache Compass, its licensing infrastructure, downloads, support, updates, compatibility, website, or individual features will remain available for any minimum period or indefinitely.
+
+Nothing in this section limits rights or remedies that applicable law does not permit Cache Compass to waive.
+
+5. SITUATIONS THAT NORMALLY DO NOT QUALIFY
+
+A refund normally will not be provided solely because a customer changed their mind after purchase; no longer wishes to organize their inventory; expected Cache Compass to make subjective inventory decisions for them; approved an inventory cleanup action and later regretted that selection; permanently purged items from Second Life Trash after Cache Compass moved them there; purchased capacity later determined to be unnecessary; uses a computer or software configuration that does not meet published requirements; experiences incompatibility caused by an unsupported configuration; experiences loss of compatibility resulting from a later third-party platform change; no longer has access to an obsolete Cache Compass installer; expected an unspecified future feature that was never included in the purchased license; objects to a prospective change in pricing for future purchases; or had a license lawfully suspended or revoked because of fraud, chargeback, piracy, unauthorized redistribution, deliberate license circumvention, or another material violation of the Terms.
+
+6. INVENTORY CLEANUP
+
+Cache Compass assists the customer in identifying and selecting inventory-management actions.
+
+Customers are responsible for reviewing selected cleanup actions before approval and for reviewing Second Life Trash before permanently deleting or purging its contents.
+
+A refund normally will not be provided solely because a customer later regrets an inventory action that the customer affirmatively reviewed and approved, subject to applicable law and any verified defect attributable to Cache Compass.
+
+7. REFUNDS AND CHARGEBACKS
+
+Customers should contact Cache Compass Support regarding a disputed purchase or technical problem before initiating a payment chargeback where reasonably practicable.
+
+A chargeback or payment reversal may result in suspension of the associated license while the payment dispute is investigated.
+
+Nothing in this section restricts a customer's lawful rights concerning payment disputes.
+
+8. MANDATORY CONSUMER RIGHTS
+
+Nothing in this Refund Policy limits refund, cancellation, warranty, statutory, or consumer rights that applicable law does not allow Cache Compass to waive.
+
+9. HOW TO REQUEST REVIEW
+
+Submit refund requests through the official Cache Compass support method with enough information to identify the purchase and describe the issue.
+
+Official support information is available at:
+
+https://slcachecompass.com/
+
+See also the Cache Compass Terms of Service & Software License Agreement and Privacy Policy.
