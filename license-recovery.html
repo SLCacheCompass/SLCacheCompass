@@ -6,7 +6,26 @@
 <title>Recover Cache Compass License</title>
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <style>
-body{margin:0;background:#05090a;color:#d8dedb;font:16px/1.55 Arial,sans-serif}main{max-width:760px;margin:50px auto;padding:0 22px}.card{background:#0a1011;border:1px solid #5e4a27;border-radius:16px;padding:28px}h1{color:#f4efe4}.gold,a{color:#d5ad61}.button{display:inline-block;margin-top:12px;padding:12px 18px;border:1px solid #d5ad61;border-radius:8px;background:#17140e;color:#f4efe4;font-weight:700;text-decoration:none}.muted{color:#87928d;font-size:13px}.toplink{display:inline-block;margin-bottom:15px;color:#c9cfcb;text-decoration:none}.toplink:hover{color:#fff}
+body{margin:0;background:#05090a;color:#d8dedb;font:16px/1.55 Arial,sans-serif}
+main{max-width:820px;margin:50px auto;padding:0 22px}
+.card{background:#0a1011;border:1px solid #5e4a27;border-radius:16px;padding:28px}
+h1,h2{color:#f4efe4}.gold,a{color:#d5ad61}
+.toplink{display:inline-block;margin-bottom:15px;color:#c9cfcb;text-decoration:none}.toplink:hover{color:#fff}
+.panel{margin-top:18px;padding:18px;border:1px solid #425055;border-radius:12px;background:#081013}
+label{display:block;margin:12px 0}
+input,button{font:inherit}
+input[type=email]{width:100%;box-sizing:border-box;padding:12px;background:#05090a;color:#f4efe4;border:1px solid #425055;border-radius:8px}
+.button{display:inline-block;padding:12px 18px;border:1px solid #d5ad61;border-radius:8px;background:#17140e;color:#f4efe4;font-weight:700;text-decoration:none;cursor:pointer}
+.button.secondary{border-color:#425055;color:#d8dedb}.button:disabled{opacity:.45;cursor:not-allowed}
+.message{min-height:24px;color:#d5ad61}
+.muted{color:#87928d;font-size:13px}
+.license-card{margin-top:14px;padding:18px;border:1px solid #425055;border-radius:12px;background:#05090a}
+.license-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap}
+.license-head strong{color:#efd196}.license-meta{color:#9aa49f;font-size:13px}
+.key{margin:14px 0;padding:12px;background:#020607;border:1px solid #354247;border-radius:8px;color:#efd196;font:17px/1.45 Consolas,monospace;word-break:break-all}
+.actions{display:flex;gap:10px;flex-wrap:wrap}
+.note{margin-top:22px;color:#9aa49f;font-size:13px;line-height:1.65}
+.hidden{display:none}
 </style>
 </head>
 <body>
@@ -14,11 +33,204 @@ body{margin:0;background:#05090a;color:#d8dedb;font:16px/1.55 Arial,sans-serif}m
 <a class="toplink" href="/download.html">← Back to Download</a>
 <div class="card">
 <p class="gold"><strong>CACHE COMPASS</strong></p>
-<h1>Need your license number?</h1>
-<p>Visit the Cache Compass in-world Mainstore and use the <strong>License Lookup</strong> kiosk. It can look up the license connected to the avatar you are logged in with.</p>
-<p class="muted">For your security, we do not provide license lookup on the website using avatar UUIDs.</p>
-<a class="button" href="http://maps.secondlife.com/secondlife/Sciliar/40/221/2001" target="_blank" rel="noopener">Visit the Cache Compass Mainstore</a>
+<h1>License Recovery</h1>
+<p>Website / USD customers can securely recover their full Cache Compass license key and download the current installer by signing in with the same verified email used for purchase.</p>
+
+<section id="signin-panel" class="panel">
+<h2>Sign in to recover your license</h2>
+<label>Purchase email
+<input id="email" type="email" autocomplete="email" placeholder="you@example.com">
+</label>
+<button class="button" id="signin" type="button">Email secure sign-in link</button>
+<p class="message" id="authmsg"></p>
+</section>
+
+<section id="account-panel" class="panel hidden">
+<div class="license-head">
+<div>
+<h2 style="margin:0">Your Cache Compass licenses</h2>
+<p class="muted" id="identity"></p>
+</div>
+<button class="button secondary" id="signout" type="button">Sign out</button>
+</div>
+<p class="message" id="recovermsg">Loading your purchases…</p>
+<div id="licenses"></div>
+</section>
+
+<p class="note"><strong>Marketplace purchase?</strong> Use the Marketplace download page and your Marketplace order or transaction number.</p>
+<p class="note"><strong>In-world vendor purchase?</strong> Use the License Lookup kiosk at the Cache Compass Mainstore to confirm the license attached to your avatar. If you no longer have the original full license key, contact Cache Compass Support.</p>
+<p class="note">Cache Compass never asks for your Second Life password or MFA code.</p>
 </div>
 </main>
+
+<script type="module">
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.4';
+
+const BASE='https://glamoujtjfczrpkrpbmp.supabase.co';
+const KEY='sb_publishable_Mm_pNT0-ETEpKIF3Ezm2iw_DGx273vf';
+const RECOVERY=BASE+'/functions/v1/license-recovery';
+const DOWNLOAD=BASE+'/functions/v1/customer-download';
+const sb=createClient(BASE,KEY);
+
+const signinPanel=document.getElementById('signin-panel');
+const accountPanel=document.getElementById('account-panel');
+const email=document.getElementById('email');
+const signin=document.getElementById('signin');
+const signout=document.getElementById('signout');
+const authmsg=document.getElementById('authmsg');
+const identity=document.getElementById('identity');
+const recovermsg=document.getElementById('recovermsg');
+const licenses=document.getElementById('licenses');
+
+async function currentSession(){
+  return (await sb.auth.getSession()).data.session;
+}
+
+async function sendSignin(){
+  const value=email.value.trim();
+  if(!value){authmsg.textContent='Enter the email address used for your purchase.';return;}
+  signin.disabled=true;
+  authmsg.textContent='Sending secure sign-in link…';
+  const redirect=location.origin+'/license-recovery.html';
+  const {error}=await sb.auth.signInWithOtp({email:value,options:{emailRedirectTo:redirect}});
+  signin.disabled=false;
+  authmsg.textContent=error?'Could not send sign-in link: '+error.message:'Check your email for the secure sign-in link, then return here.';
+}
+
+function addText(parent,tag,text,className){
+  const el=document.createElement(tag);
+  if(className)el.className=className;
+  el.textContent=text;
+  parent.appendChild(el);
+  return el;
+}
+
+async function prepareDownload(button,key){
+  button.disabled=true;
+  const original=button.textContent;
+  button.textContent='Preparing download…';
+  try{
+    const response=await fetch(DOWNLOAD,{
+      method:'POST',
+      headers:{'content-type':'application/json'},
+      body:JSON.stringify({licenseKey:key})
+    });
+    const body=await response.json().catch(()=>({}));
+    if(!response.ok||!body.available)throw new Error(body.error||'download_unavailable');
+    location.assign(body.url);
+    button.textContent='Download started';
+  }catch{
+    button.disabled=false;
+    button.textContent=original;
+    recovermsg.textContent='The download could not be prepared. Please contact support@slcachecompass.com.';
+  }
+}
+
+async function copyKey(button,key){
+  try{
+    await navigator.clipboard.writeText(key);
+    const original=button.textContent;
+    button.textContent='Copied';
+    setTimeout(()=>button.textContent=original,1500);
+  }catch{
+    recovermsg.textContent='Could not copy automatically. You can select the license key above and copy it manually.';
+  }
+}
+
+function renderRecovered(items){
+  licenses.textContent='';
+  if(!Array.isArray(items)||!items.length){
+    recovermsg.textContent='No completed website / USD purchases were found for this signed-in account.';
+    return;
+  }
+  recovermsg.textContent='';
+
+  for(const item of items){
+    const card=document.createElement('div');
+    card.className='license-card';
+
+    const head=document.createElement('div');
+    head.className='license-head';
+    const left=document.createElement('div');
+    addText(left,'strong','License #'+String(item.licenseNumber ?? ''));
+    addText(left,'div',String(item.currentCapacity ?? item.purchasedSlots ?? 0)+' avatar capacity','license-meta');
+    if(item.paidAt){
+      const d=new Date(item.paidAt);
+      if(!Number.isNaN(d.getTime()))addText(left,'div','Purchased '+d.toLocaleDateString(),'license-meta');
+    }
+    head.appendChild(left);
+    addText(head,'div',String(item.status||'').toUpperCase(),'license-meta');
+    card.appendChild(head);
+
+    if(item.status==='active'&&item.licenseKey){
+      const keyBox=addText(card,'div',item.licenseKey,'key');
+      keyBox.setAttribute('aria-label','Full Cache Compass license key');
+
+      const actions=document.createElement('div');
+      actions.className='actions';
+
+      const download=document.createElement('button');
+      download.type='button';
+      download.className='button';
+      download.textContent='Download Cache Compass';
+      download.addEventListener('click',()=>prepareDownload(download,item.licenseKey));
+
+      const copy=document.createElement('button');
+      copy.type='button';
+      copy.className='button secondary';
+      copy.textContent='Copy license key';
+      copy.addEventListener('click',()=>copyKey(copy,item.licenseKey));
+
+      actions.append(download,copy);
+      card.appendChild(actions);
+    }else{
+      addText(card,'p','This license is not currently active. Please contact Cache Compass Support.','message');
+    }
+
+    licenses.appendChild(card);
+  }
+}
+
+async function recover(session){
+  recovermsg.textContent='Loading your purchases…';
+  licenses.textContent='';
+  try{
+    const response=await fetch(RECOVERY,{
+      method:'POST',
+      headers:{
+        'authorization':'Bearer '+session.access_token,
+        'apikey':KEY,
+        'content-type':'application/json'
+      },
+      body:'{}'
+    });
+    const body=await response.json().catch(()=>({}));
+    if(!response.ok)throw new Error(body.error||'recovery_unavailable');
+    renderRecovered(body.licenses);
+  }catch{
+    recovermsg.textContent='License recovery is temporarily unavailable. Please contact support@slcachecompass.com.';
+  }
+}
+
+async function refresh(){
+  const session=await currentSession();
+  if(!session){
+    signinPanel.classList.remove('hidden');
+    accountPanel.classList.add('hidden');
+    return;
+  }
+
+  signinPanel.classList.add('hidden');
+  accountPanel.classList.remove('hidden');
+  identity.textContent='Signed in as '+(session.user.email||'verified customer');
+  await recover(session);
+}
+
+signin.addEventListener('click',sendSignin);
+email.addEventListener('keydown',(event)=>{if(event.key==='Enter')sendSignin();});
+signout.addEventListener('click',async()=>{await sb.auth.signOut();location.reload();});
+
+await refresh();
+</script>
 </body>
 </html>
