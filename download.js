@@ -11,7 +11,7 @@ button.addEventListener('click',async()=>{
     const response=await fetch(endpoint,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({licenseKey})});
     const body=await response.json().catch(()=>({}));
     if(!response.ok){message.textContent=human(body.error,body.status);return;}
-    message.textContent=`Cache Compass ${body.version} is ready. The private link expires in 10 minutes.`;
+    message.textContent=`Cache Compass ${body.version} is ready.`;
     meta.textContent=`SHA-256: ${body.sha256}`;
     const link=document.createElement('a');
     link.className='button button-primary'; link.href=body.url; link.textContent='Download CacheCompass-Setup.exe';
