@@ -22,8 +22,8 @@ try {
   if (button) {button.href = DOWNLOAD_URL; button.removeAttribute('aria-disabled');}
   const status = document.getElementById('release-status');
   if (status) status.textContent = 'Latest installer available.';
-  if (release.version !== '1.0.7') {
-    document.getElementById('changes-107')?.setAttribute('hidden', '');
+  if (release.version !== '1.0.8') {
+    document.getElementById('changes-108')?.setAttribute('hidden', '');
     const notes = document.getElementById('future-release-notes');
     if (notes) {notes.textContent = release.releaseNotes || 'Download the latest release above.'; notes.hidden = false;}
   }
