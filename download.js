@@ -12,9 +12,9 @@ button.addEventListener('click',async()=>{
     const body=await response.json().catch(()=>({}));
     if(!response.ok){message.textContent=human(body.error,body.status);return;}
     message.textContent=`Cache Compass ${body.version} is ready.`;
-    meta.textContent=`SHA-256: ${body.sha256}`;
+    meta.textContent=body.sha256 ? `SHA-256: ${body.sha256}` : '';
     const link=document.createElement('a');
-    link.className='button button-primary'; link.href=body.url; link.textContent='Download CacheCompass-Setup.exe';
+    link.className='button button-primary'; link.href=body.url; link.textContent=`Download ${body.fileName || 'CacheCompass-Setup.exe'}`;
     link.rel='noopener'; meta.append(document.createElement('br'),document.createElement('br'),link);
   }catch{message.textContent='The download service could not be reached. Please try again.';}
   finally{button.disabled=false;}

@@ -89,7 +89,7 @@ button.addEventListener('click',async()=>{
       return;
     }
     message.textContent=`Cache Compass ${body.version} is ready. The download link expires in 10 minutes.`;
-    meta.textContent=`SHA-256: ${body.sha256}`;
+    meta.textContent=body.sha256 ? `SHA-256: ${body.sha256}` : '';
     const link=document.createElement('a');
     link.className='button button-primary';
     link.href=body.url;
